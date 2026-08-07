@@ -1,5 +1,6 @@
 from datetime import datetime, timezone, timedelta
 import pandas as pd
+import plotly.graph_objects as go
 import streamlit as st
 import yfinance as yf
 
@@ -15,7 +16,8 @@ st.set_page_config(
 # ---------------------------------------------------------
 # 🎨 고급 CSS 스타일링 (다크 모드 디자인)
 # ---------------------------------------------------------
-st.markdown("""
+st.markdown(
+    """
 <style>
     .stApp {
         background-color: #0e1117;
@@ -157,10 +159,12 @@ st.markdown("""
         display: none;
     }
 </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 # ---------------------------------------------------------
-# 📂 전체 14개 종목 데이터 (요청하신 순서 반영)
+# 📂 전체 14개 종목 데이터
 # ---------------------------------------------------------
 portfolio_data = [
     {
@@ -308,19 +312,17 @@ current_usd_krw = get_exchange_rate()
 def calculate_stock(item, exchange_rate):
     ticker = yf.Ticker(item["ticker"])
     try:
-        # fast_info를 통해 가장 최신의 실시간 가격(애프터마켓/프리마켓 포함)을 우선 조회
+        # 애프터마켓/실시간 반영을 위한 fast_info 우선 조회
         fi = ticker.fast_info
         current_price = getattr(fi, "last_price", None)
-        
-        # 만약 fast_info에서 못 가져오면 기존 history 방식 사용
+
         if not current_price:
             hist = ticker.history(period="1d")
             if not hist.empty:
                 current_price = hist["Close"].iloc[-1]
             else:
                 current_price = item["avg_price"]
-        
-        # 고가/저가는 당일 history 데이터 활용
+
         hist = ticker.history(period="1d")
         if not hist.empty:
             high_price = hist["High"].iloc[-1]
@@ -328,7 +330,6 @@ def calculate_stock(item, exchange_rate):
         else:
             high_price = current_price
             low_price = current_price
-            
     except:
         current_price = item["avg_price"]
         high_price = item["avg_price"]
@@ -368,10 +369,8 @@ def calculate_stock(item, exchange_rate):
 # ---------------------------------------------------------
 # 🖥️ 화면 렌더링 (KST 및 UTC 시간 분리 표기)
 # ---------------------------------------------------------
-
 st.title("석의 주식창")
 
-# 한국 시간(KST, UTC+9)과 협정 세계시(UTC) 생성
 kst = timezone(timedelta(hours=9))
 utc = timezone.utc
 
@@ -382,7 +381,7 @@ st.markdown(
     f"""
 <div class='main-subtitle'>
     🇰🇷 <b>한국 시간 (KST):</b> {time_kst} &nbsp;&nbsp;|&nbsp;&nbsp; 🌍 <b>협정 세계시 (UTC):</b> {time_utc} <br>
-    <span style="color: #a0aab5; font-size: 0.9rem;">실시간 시세 및 고저가 반영 중</span>
+    <span style="color: #a0aab5; font-size: 0.9rem;">실시간 시세 및 애프터마켓 반영 중</span>
 </div>
 """,
     unsafe_allow_html=True,
@@ -406,7 +405,7 @@ total_profit_rate = (
 )
 profit_class_total = "profit-pos" if total_profit >= 0 else "profit-neg"
 
-# 상단 요약 카드 (전체 기준)
+# 상단 요약 카드
 st.markdown(
     f"""
 <div class="kpi-container">
@@ -434,7 +433,7 @@ st.markdown(
 )
 
 # ---------------------------------------------------------
-# 📑 계좌별 탭 메뉴 (전체 보기 / 토스 / 카카오페이)
+# 📑 계좌별 탭 메뉴
 # ---------------------------------------------------------
 tab_all, tab_toss, tab_kakao = st.tabs(
     ["📊 전체 보기", "💳 토스 계좌", "💬 카카오페이 계좌"]
@@ -444,37 +443,137 @@ tab_all, tab_toss, tab_kakao = st.tabs(
 def render_stock_cards(data_list):
     for data in data_list:
         profit_class = "profit-pos" if data["profit_rate"] >= 0 else "profit-neg"
-        avg_price_display = f"${data['avg_price']:,.2f}" if data["currency"] == "USD" else f"{data['avg_price']:,.0f}원"
-        
-        shares_display = f"{int(data['shares'])}주" if data['shares'] == int(data['shares']) else f"{data['shares']:.3f}주"
+        avg_price_display = (
+            f"${data['avg_price']:,.2f}"
+            if data["currency"] == "USD"
+            else f"{data['avg_price']:,.0f}원"
+        )
 
-        with st.expander(f"📌 {data['name']} ({data['ticker']}) - 현재가: {data['current_price_display']} ({data['profit_rate']:+.2f}%)"):
-            
-            # 1. 기존 상세 카드 정보
-            st.markdown(f"""
-            <div class="stock-card" style="margin-bottom: 10px;">
+        # 소수점 여부에 따른 수량 표기
+        if data["shares"] == int(data["shares"]):
+            shares_display = f"{int(data['shares'])}주"
+        else:
+            shares_display = f"{data['shares']:.3f}주"
+
+        with st.expander(
+            f"📌 {data['name']} ({data['ticker']}) - 현재가: {data['current_price_display']} ({data['profit_rate']:+.2f}%)"
+        ):
+            # 1. 주식 정보 카드
+            st.markdown(
+                f"""
+            <div class="stock-card" style="margin-bottom: 15px;">
+                <div class="card-top">
+                    <div class="stock-name-area">
+                        <div class="company-logo">{data['logo_char']}</div>
+                        <div>
+                            <div class="company-name">{data['name']}</div>
+                            <div class="company-meta">{data['category']} · {data['ticker']}</div>
+                        </div>
+                    </div>
+                    <div class="card-price-area">
+                        <div class="current-price {profit_class}">{data['current_price_display']}</div>
+                        <div class="company-meta {profit_class}">{data['profit_rate']:.2f}%</div>
+                    </div>
+                </div>
                 <div class="card-bottom-grid">
-                    <div><div class="info-label">보유수량 / 평단</div><div class="info-value">{shares_display} / {avg_price_display}</div></div>
-                    <div><div class="info-label">최저 ~ 최고</div><div class="info-value" style="font-size: 0.9rem;">{data['high_low_display']}</div></div>
-                    <div><div class="info-label">평가손익</div><div class="info-value {profit_class}">{data['profit_krw']:,.0f}원</div></div>
-                    <div><div class="info-label">평가금액</div><div class="info-value">{data['current_val_krw']:,.0f}원</div></div>
+                    <div>
+                        <div class="info-label">보유수량 / 평단</div>
+                        <div class="info-value">{shares_display} / {avg_price_display}</div>
+                    </div>
+                    <div>
+                        <div class="info-label">당일 최저 ~ 최고가</div>
+                        <div class="info-value" style="font-size: 0.9rem;">{data['high_low_display']}</div>
+                    </div>
+                    <div>
+                        <div class="info-label">평가손익</div>
+                        <div class="info-value {profit_class}">{data['profit_krw']:,.0f}원</div>
+                    </div>
+                    <div>
+                        <div class="info-label">평가금액</div>
+                        <div class="info-value">{data['current_val_krw']:,.0f}원</div>
+                    </div>
                 </div>
             </div>
-            """, unsafe_allow_html=True)
+            """,
+                unsafe_allow_html=True,
+            )
 
-            # 2. 당일 시간별(분봉) 그래프
-            st.markdown("<div style='font-size: 0.9rem; color: #a0aab5; margin-bottom: 5px;'>📉 오늘 하루 주가 흐름 (분봉)</div>", unsafe_allow_html=True)
+            # 2. 기간 선택 라디오 버튼 (1일, 1주, 1달, 3달)
+            period_option = st.radio(
+                "차트 기간 선택",
+                ["1일", "1주", "1달", "3달"],
+                horizontal=True,
+                key=f"radio_{data['ticker']}_{data['name']}",
+            )
+
+            period_map = {
+                "1일": ("1d", "5m"),
+                "1주": ("5d", "30m"),
+                "1달": ("1mo", "1d"),
+                "3달": ("3mo", "1d"),
+            }
+            p, i = period_map[period_option]
+
+            # 3. Plotly 이동평균선 차트 렌더링
             try:
                 t_obj = yf.Ticker(data["ticker"])
-                # period="1d", interval="5m"은 당일 5분 단위 데이터를 의미합니다.
-                hist_df = t_obj.history(period="1d", interval="5m")
-                
-                if not hist_df.empty:
-                    st.line_chart(hist_df["Close"])
+                df = t_obj.history(period=p, interval=i)
+
+                if not df.empty:
+                    fig = go.Figure()
+
+                    # 종가 선 (회색)
+                    fig.add_trace(
+                        go.Scatter(
+                            x=df.index,
+                            y=df["Close"],
+                            name="종가",
+                            line=dict(color="gray", width=1.5),
+                        )
+                    )
+
+                    # 이동평균선 설정 (5:연두, 10:검정, 20:빨강, 60:주황, 120:보라)
+                    ma_settings = {
+                        5: "lime",
+                        10: "black",
+                        20: "red",
+                        60: "orange",
+                        120: "purple",
+                    }
+                    for window, color in ma_settings.items():
+                        if len(df) >= window:
+                            ma = df["Close"].rolling(window=window).mean()
+                            fig.add_trace(
+                                go.Scatter(
+                                    x=df.index,
+                                    y=ma,
+                                    name=f"{window}MA",
+                                    line=dict(color=color, width=2),
+                                )
+                            )
+
+                    fig.update_layout(
+                        height=380,
+                        margin=dict(l=0, r=0, t=20, b=0),
+                        legend=dict(
+                            orientation="h",
+                            yanchor="bottom",
+                            y=1.02,
+                            xanchor="right",
+                            x=1,
+                        ),
+                        paper_bgcolor="#161b22",
+                        plot_bgcolor="#161b22",
+                        font=dict(color="#ffffff"),
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
                 else:
-                    st.info("오늘의 데이터가 아직 없거나 장이 열리지 않았습니다.")
+                    st.info(
+                        "선택한 기간의 차트 데이터를 불러올 수 없습니다."
+                    )
             except Exception:
-                st.error("당일 그래프를 불러올 수 없습니다.")
+                st.error("차트를 불러오는 중 오류가 발생했습니다.")
+
 
 with tab_all:
     render_stock_cards(all_stock_data)
