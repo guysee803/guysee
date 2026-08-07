@@ -8,7 +8,7 @@ import yfinance as yf
 # 🌐 웹페이지 기본 설정
 # ---------------------------------------------------------
 st.set_page_config(
-    page_title="석의 주식창 V7 - 다중 이동평균선 추가",
+    page_title="석의 주식창 V9 - 마켓 구분 표시 수정",
     page_icon="📈",
     layout="wide",
 )
@@ -319,6 +319,8 @@ def calculate_stock(item, exchange_rate):
     except:
         current_price = item["avg_price"]
 
+    market_type = "해외" if item["currency"] == "USD" else "국내"
+
     if item["currency"] == "USD":
         invest_krw = item["avg_price"] * item["shares"] * exchange_rate
         current_val_krw = current_price * item["shares"] * exchange_rate
@@ -342,6 +344,7 @@ def calculate_stock(item, exchange_rate):
         "category": item["category"],
         "name": item["name"],
         "ticker": item["ticker"],
+        "market_type": market_type,
         "shares_display": shares_display,
         "avg_price_display": avg_price_display,
         "currency": item["currency"],
@@ -429,14 +432,13 @@ def render_stock_cards(data_list):
         with st.expander(
             f"📌 {data['name']} - 현재가: {data['current_price_display']} ({sign_str}{data['profit_rate']:.2f}%)"
         ):
-            st.markdown(
-                f"""
+            card_html = f"""
             <div class="toss-card">
                 <div class="toss-header">
                     <div>
                         <div class="toss-badge">{data['category']}</div>
                         <div class="toss-title">{data['name']}</div>
-                        <div class="toss-sub">일반 · {data['ticker']}</div>
+                        <div class="toss-sub">일반 · {data['market_type']}</div>
                     </div>
                     <div class="toss-price-area">
                         <div class="toss-price-label">현재가</div>
@@ -464,9 +466,8 @@ def render_stock_cards(data_list):
                     </div>
                 </div>
             </div>
-            """,
-                unsafe_allow_html=True,
-            )
+            """
+            st.markdown(card_html, unsafe_allow_html=True)
 
             period_option = st.radio(
                 "차트 기간 선택",
@@ -488,17 +489,14 @@ def render_stock_cards(data_list):
                 df = t_obj.history(period=p, interval=i)
 
                 if not df.empty:
-                    # 5일, 10일, 20일, 60일, 120일 이동평균선 계산
                     df["MA5"] = df["Close"].rolling(window=5).mean()
                     df["MA10"] = df["Close"].rolling(window=10).mean()
                     df["MA20"] = df["Close"].rolling(window=20).mean()
                     df["MA60"] = df["Close"].rolling(window=60).mean()
                     df["MA120"] = df["Close"].rolling(window=120).mean()
 
-                    # Plotly 차트 생성
                     fig = go.Figure()
 
-                    # 종가 라인
                     fig.add_trace(
                         go.Scatter(
                             x=df.index,
@@ -508,8 +506,6 @@ def render_stock_cards(data_list):
                             line=dict(color="#ffffff", width=1.5),
                         )
                     )
-
-                    # 5일선
                     fig.add_trace(
                         go.Scatter(
                             x=df.index,
@@ -519,8 +515,6 @@ def render_stock_cards(data_list):
                             line=dict(color="#f04452", width=1.2),
                         )
                     )
-
-                    # 10일선
                     fig.add_trace(
                         go.Scatter(
                             x=df.index,
@@ -530,8 +524,6 @@ def render_stock_cards(data_list):
                             line=dict(color="#e5a93b", width=1.2),
                         )
                     )
-
-                    # 20일선
                     fig.add_trace(
                         go.Scatter(
                             x=df.index,
@@ -541,8 +533,6 @@ def render_stock_cards(data_list):
                             line=dict(color="#3182f6", width=1.2),
                         )
                     )
-
-                    # 60일선
                     fig.add_trace(
                         go.Scatter(
                             x=df.index,
@@ -552,8 +542,6 @@ def render_stock_cards(data_list):
                             line=dict(color="#9b5de5", width=1.2),
                         )
                     )
-
-                    # 120일선
                     fig.add_trace(
                         go.Scatter(
                             x=df.index,
@@ -564,7 +552,6 @@ def render_stock_cards(data_list):
                         )
                     )
 
-                    # 차트 레이아웃 디자인 설정 (다크모드 맞춤)
                     fig.update_layout(
                         margin=dict(l=10, r=10, t=20, b=10),
                         height=320,
