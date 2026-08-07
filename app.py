@@ -1,6 +1,5 @@
 from datetime import datetime, timezone, timedelta
 import pandas as pd
-import plotly.graph_objects as go
 import streamlit as st
 import yfinance as yf
 
@@ -312,7 +311,6 @@ current_usd_krw = get_exchange_rate()
 def calculate_stock(item, exchange_rate):
     ticker = yf.Ticker(item["ticker"])
     try:
-        # 애프터마켓/실시간 반영을 위한 fast_info 우선 조회
         fi = ticker.fast_info
         current_price = getattr(fi, "last_price", None)
 
@@ -367,7 +365,7 @@ def calculate_stock(item, exchange_rate):
 
 
 # ---------------------------------------------------------
-# 🖥️ 화면 렌더링 (KST 및 UTC 시간 분리 표기)
+# 🖥️ 화면 렌더링
 # ---------------------------------------------------------
 st.title("석의 주식창")
 
@@ -387,7 +385,6 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# 데이터 계산
 all_stock_data = []
 total_invest = 0
 total_current_val = 0
@@ -405,14 +402,12 @@ total_profit_rate = (
 )
 profit_class_total = "profit-pos" if total_profit >= 0 else "profit-neg"
 
-# 상단 요약 카드
 st.markdown(
     f"""
 <div class="kpi-container">
     <div class="kpi-card">
         <div class="kpi-label">총 투자원금</div>
         <div class="kpi-value">{total_invest:,.0f} 원</div>
-        <div class="kpi-sub-value">보유수량 × 평균단가</div>
     </div>
     <div class="kpi-card">
         <div class="kpi-label">현재 평가금액</div>
@@ -432,9 +427,6 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# ---------------------------------------------------------
-# 📑 계좌별 탭 메뉴
-# ---------------------------------------------------------
 tab_all, tab_toss, tab_kakao = st.tabs(
     ["📊 전체 보기", "💳 토스 계좌", "💬 카카오페이 계좌"]
 )
@@ -449,7 +441,6 @@ def render_stock_cards(data_list):
             else f"{data['avg_price']:,.0f}원"
         )
 
-        # 소수점 여부에 따른 수량 표기
         if data["shares"] == int(data["shares"]):
             shares_display = f"{int(data['shares'])}주"
         else:
@@ -458,7 +449,6 @@ def render_stock_cards(data_list):
         with st.expander(
             f"📌 {data['name']} ({data['ticker']}) - 현재가: {data['current_price_display']} ({data['profit_rate']:+.2f}%)"
         ):
-            # 1. 주식 정보 카드
             st.markdown(
                 f"""
             <div class="stock-card" style="margin-bottom: 15px;">
@@ -498,8 +488,7 @@ def render_stock_cards(data_list):
                 unsafe_allow_html=True,
             )
 
-            # 2. 기간 선택 라디오 버튼 (1일, 1주, 1달, 3달)
-           period_option = st.radio(
+            period_option = st.radio(
                 "차트 기간 선택",
                 ["1일", "1주", "1달", "3달"],
                 horizontal=True,
@@ -514,59 +503,12 @@ def render_stock_cards(data_list):
             }
             p, i = period_map[period_option]
 
-            # 3. Plotly 이동평균선 차트 렌더링
             try:
                 t_obj = yf.Ticker(data["ticker"])
                 df = t_obj.history(period=p, interval=i)
 
                 if not df.empty:
-                    fig = go.Figure()
-
-                    # 종가 선 (회색)
-                    fig.add_trace(
-                        go.Scatter(
-                            x=df.index,
-                            y=df["Close"],
-                            name="종가",
-                            line=dict(color="gray", width=1.5),
-                        )
-                    )
-
-                    # 이동평균선 설정 (5:연두, 10:검정, 20:빨강, 60:주황, 120:보라)
-                    ma_settings = {
-                        5: "lime",
-                        10: "black",
-                        20: "red",
-                        60: "orange",
-                        120: "purple",
-                    }
-                    for window, color in ma_settings.items():
-                        if len(df) >= window:
-                            ma = df["Close"].rolling(window=window).mean()
-                            fig.add_trace(
-                                go.Scatter(
-                                    x=df.index,
-                                    y=ma,
-                                    name=f"{window}MA",
-                                    line=dict(color=color, width=2),
-                                )
-                            )
-
-                    fig.update_layout(
-                        height=380,
-                        margin=dict(l=0, r=0, t=20, b=0),
-                        legend=dict(
-                            orientation="h",
-                            yanchor="bottom",
-                            y=1.02,
-                            xanchor="right",
-                            x=1,
-                        ),
-                        paper_bgcolor="#161b22",
-                        plot_bgcolor="#161b22",
-                        font=dict(color="#ffffff"),
-                    )
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.line_chart(df["Close"])
                 else:
                     st.info(
                         "선택한 기간의 차트 데이터를 불러올 수 없습니다."
