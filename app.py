@@ -308,15 +308,27 @@ current_usd_krw = get_exchange_rate()
 def calculate_stock(item, exchange_rate):
     ticker = yf.Ticker(item["ticker"])
     try:
+        # fast_info를 통해 가장 최신의 실시간 가격(애프터마켓/프리마켓 포함)을 우선 조회
+        fi = ticker.fast_info
+        current_price = getattr(fi, "last_price", None)
+        
+        # 만약 fast_info에서 못 가져오면 기존 history 방식 사용
+        if not current_price:
+            hist = ticker.history(period="1d")
+            if not hist.empty:
+                current_price = hist["Close"].iloc[-1]
+            else:
+                current_price = item["avg_price"]
+        
+        # 고가/저가는 당일 history 데이터 활용
         hist = ticker.history(period="1d")
         if not hist.empty:
-            current_price = hist["Close"].iloc[-1]
             high_price = hist["High"].iloc[-1]
             low_price = hist["Low"].iloc[-1]
         else:
-            current_price = item["avg_price"]
-            high_price = item["avg_price"]
-            low_price = item["avg_price"]
+            high_price = current_price
+            low_price = current_price
+            
     except:
         current_price = item["avg_price"]
         high_price = item["avg_price"]
