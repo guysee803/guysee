@@ -446,63 +446,35 @@ def render_stock_cards(data_list):
         profit_class = "profit-pos" if data["profit_rate"] >= 0 else "profit-neg"
         avg_price_display = f"${data['avg_price']:,.2f}" if data["currency"] == "USD" else f"{data['avg_price']:,.0f}원"
         
-        if data['shares'] == int(data['shares']):
-            shares_display = f"{int(data['shares'])}주"
-        else:
-            shares_display = f"{data['shares']:.3f}주"
+        shares_display = f"{int(data['shares'])}주" if data['shares'] == int(data['shares']) else f"{data['shares']:.3f}주"
 
-        # 각 종목명을 제목으로 하는 아코디언(클릭해서 여는 방식) 생성
         with st.expander(f"📌 {data['name']} ({data['ticker']}) - 현재가: {data['current_price_display']} ({data['profit_rate']:+.2f}%)"):
             
-            # 1. 카드 UI 내용 표시
+            # 1. 기존 상세 카드 정보
             st.markdown(f"""
             <div class="stock-card" style="margin-bottom: 10px;">
-                <div class="card-top">
-                    <div class="stock-name-area">
-                        <div class="company-logo">{data['logo_char']}</div>
-                        <div>
-                            <div class="company-name">{data['name']}</div>
-                            <div class="company-meta">{data['category']} · {data['ticker']}</div>
-                        </div>
-                    </div>
-                    <div class="card-price-area">
-                        <div class="current-price {profit_class}">{data['current_price_display']}</div>
-                        <div class="company-meta {profit_class}">{data['profit_rate']:.2f}%</div>
-                    </div>
-                </div>
                 <div class="card-bottom-grid">
-                    <div>
-                        <div class="info-label">보유수량 / 평단</div>
-                        <div class="info-value">{shares_display} / {avg_price_display}</div>
-                    </div>
-                    <div>
-                        <div class="info-label">당일 최저 ~ 최고가</div>
-                        <div class="info-value" style="font-size: 0.9rem;">{data['high_low_display']}</div>
-                    </div>
-                    <div>
-                        <div class="info-label">평가손익</div>
-                        <div class="info-value {profit_class}">{data['profit_krw']:,.0f}원</div>
-                    </div>
-                    <div>
-                        <div class="info-label">평가금액 (종가기준)</div>
-                        <div class="info-value">{data['current_val_krw']:,.0f}원</div>
-                    </div>
+                    <div><div class="info-label">보유수량 / 평단</div><div class="info-value">{shares_display} / {avg_price_display}</div></div>
+                    <div><div class="info-label">최저 ~ 최고</div><div class="info-value" style="font-size: 0.9rem;">{data['high_low_display']}</div></div>
+                    <div><div class="info-label">평가손익</div><div class="info-value {profit_class}">{data['profit_krw']:,.0f}원</div></div>
+                    <div><div class="info-label">평가금액</div><div class="info-value">{data['current_val_krw']:,.0f}원</div></div>
                 </div>
             </div>
             """, unsafe_allow_html=True)
 
-            # 2. 클릭했을 때 불러오는 최근 주가 추이 그래프
-            st.markdown("<div style='font-size: 0.9rem; color: #a0aab5; margin-bottom: 5px;'>📊 최근 3개월 주가 추이</div>", unsafe_allow_html=True)
+            # 2. 당일 시간별(분봉) 그래프
+            st.markdown("<div style='font-size: 0.9rem; color: #a0aab5; margin-bottom: 5px;'>📉 오늘 하루 주가 흐름 (분봉)</div>", unsafe_allow_html=True)
             try:
                 t_obj = yf.Ticker(data["ticker"])
-                hist_df = t_obj.history(period="3mo") # 최근 3개월 데이터
+                # period="1d", interval="5m"은 당일 5분 단위 데이터를 의미합니다.
+                hist_df = t_obj.history(period="1d", interval="5m")
+                
                 if not hist_df.empty:
-                    # 종가(Close) 데이터만 뽑아서 스트림릿 기본 라인 차트로 표시
                     st.line_chart(hist_df["Close"])
                 else:
-                    st.info("차트 데이터를 불러올 수 없습니다.")
-            except Exception as e:
-                st.error("차트를 불러오는 중 오류가 발생했습니다.")
+                    st.info("오늘의 데이터가 아직 없거나 장이 열리지 않았습니다.")
+            except Exception:
+                st.error("당일 그래프를 불러올 수 없습니다.")
 
 with tab_all:
     render_stock_cards(all_stock_data)
