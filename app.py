@@ -8,7 +8,7 @@ import yfinance as yf
 # 🌐 웹페이지 기본 설정
 # ---------------------------------------------------------
 st.set_page_config(
-    page_title="석의 주식창 V13 - 2열 카드 그리드 레이아웃",
+    page_title="석의 주식창 V14 - 탭 키 중복 해결",
     page_icon="📈",
     layout="wide",
 )
@@ -401,8 +401,7 @@ tab_all, tab_toss, tab_kakao = st.tabs(
 )
 
 
-def render_stock_grid(data_list):
-    # 2개씩 짝지어서 한 행(row)에 배치
+def render_stock_grid(data_list, tab_prefix):
     for i in range(0, len(data_list), 2):
         cols = st.columns(2)
 
@@ -422,7 +421,6 @@ def render_stock_grid(data_list):
                             '<div class="toss-card-bg">', unsafe_allow_html=True
                         )
 
-                        # 카드 상단 헤더 (종목명 & 현재가)
                         h1, h2 = st.columns([1.1, 1])
                         with h1:
                             st.markdown(
@@ -452,7 +450,6 @@ def render_stock_grid(data_list):
                             unsafe_allow_html=True,
                         )
 
-                        # 하단 4개 정보 박스 그리드
                         g1, g2, g3, g4 = st.columns(4)
                         with g1:
                             st.markdown(
@@ -477,12 +474,11 @@ def render_stock_grid(data_list):
 
                         st.markdown("</div>", unsafe_allow_html=True)
 
-                        # 차트 기간 선택 및 그래프
                         period_option = st.radio(
                             "차트 기간 선택",
                             ["1일", "1주", "1달", "3달"],
                             horizontal=True,
-                            key=f"radio_{data['category']}_{data['ticker']}_{data['name']}_{i}_{j}",
+                            key=f"radio_{tab_prefix}_{data['category']}_{data['ticker']}_{data['name']}_{i}_{j}",
                         )
 
                         period_map = {
@@ -595,7 +591,7 @@ def render_stock_grid(data_list):
 
 
 with tab_all:
-    render_stock_grid(all_stock_data)
+    render_stock_grid(all_stock_data, "all")
 
 with tab_toss:
     toss_data = [
@@ -603,7 +599,7 @@ with tab_toss:
         for d in all_stock_data
         if d["name"] in ["SK하이닉스", "SK스퀘어", "크리에이트 엔터프라이즈"]
     ]
-    render_stock_grid(toss_data)
+    render_stock_grid(toss_data, "toss")
 
 with tab_kakao:
     kakao_data = [
@@ -611,4 +607,4 @@ with tab_kakao:
         for d in all_stock_data
         if d["name"] not in ["SK하이닉스", "SK스퀘어", "크리에이트 엔터프라이즈"]
     ]
-    render_stock_grid(kakao_data)
+    render_stock_grid(kakao_data, "kakao")
