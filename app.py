@@ -8,13 +8,13 @@ import yfinance as yf
 # 🌐 웹페이지 기본 설정
 # ---------------------------------------------------------
 st.set_page_config(
-    page_title="석의 주식창 V14 - 탭 키 중복 해결",
+    page_title="석의 주식창 V15 - 메인 시세 상시 노출",
     page_icon="📈",
     layout="wide",
 )
 
 # ---------------------------------------------------------
-# 🎨 고급 CSS 스타일링 (2열 카드 및 토스앱 스타일)
+# 🎨 고급 CSS 스타일링 (토스앱 스타일 카드 디자인)
 # ---------------------------------------------------------
 st.markdown(
     """
@@ -75,7 +75,7 @@ st.markdown(
     .toss-card-bg {
         background-color: #161b22;
         border-radius: 20px;
-        padding: 22px;
+        padding: 20px;
         margin-bottom: 16px;
         box-shadow: 0 6px 12px rgba(0,0,0,0.25);
         border: 1px solid #2a323e;
@@ -93,7 +93,7 @@ st.markdown(
     }
 
     .toss-title {
-        font-size: 1.3rem;
+        font-size: 1.25rem;
         font-weight: 700;
         color: #ffffff;
         margin-bottom: 2px;
@@ -105,7 +105,7 @@ st.markdown(
     }
 
     .toss-current-price {
-        font-size: 1.5rem;
+        font-size: 1.4rem;
         font-weight: 700;
     }
 
@@ -126,7 +126,7 @@ st.markdown(
     .toss-info-box {
         background-color: #1f2630;
         border-radius: 12px;
-        padding: 12px 14px;
+        padding: 10px 12px;
     }
 
     .toss-info-label {
@@ -136,7 +136,7 @@ st.markdown(
     }
 
     .toss-info-value {
-        font-size: 0.95rem;
+        font-size: 0.9rem;
         font-weight: 700;
         color: #ffffff;
     }
@@ -414,66 +414,66 @@ def render_stock_grid(data_list, tab_prefix):
                 sign_str = "+" if data["profit_rate"] >= 0 else ""
 
                 with cols[j]:
-                    with st.expander(
-                        f"📌 {data['name']} ({sign_str}{data['profit_rate']:.2f}%)"
-                    ):
+                    # 카드 전체를 항상 눈에 보이도록 배치
+                    st.markdown(
+                        '<div class="toss-card-bg">', unsafe_allow_html=True
+                    )
+
+                    h1, h2 = st.columns([1.1, 1])
+                    with h1:
                         st.markdown(
-                            '<div class="toss-card-bg">', unsafe_allow_html=True
+                            f'<div class="toss-badge">{data["category"]}</div>',
+                            unsafe_allow_html=True,
                         )
-
-                        h1, h2 = st.columns([1.1, 1])
-                        with h1:
-                            st.markdown(
-                                f'<div class="toss-badge">{data["category"]}</div>',
-                                unsafe_allow_html=True,
-                            )
-                            st.markdown(
-                                f'<div class="toss-title">{data["name"]}</div>',
-                                unsafe_allow_html=True,
-                            )
-                            st.markdown(
-                                f'<div class="toss-sub">일반 · {data["market_type"]}</div>',
-                                unsafe_allow_html=True,
-                            )
-                        with h2:
-                            st.markdown(
-                                '<div style="text-align: right;">'
-                                '<div style="color: #a0aab5; font-size: 0.75rem; margin-bottom: 2px;">현재가</div>'
-                                f'<div class="toss-current-price {profit_class}">{data["current_price_display"]}</div>'
-                                f'<div class="toss-profit-rate {profit_class}">{sign_str}{data["profit_rate"]:.2f}%</div>'
-                                "</div>",
-                                unsafe_allow_html=True,
-                            )
-
                         st.markdown(
-                            "<div style='margin-top: 14px;'></div>",
+                            f'<div class="toss-title">{data["name"]}</div>',
+                            unsafe_allow_html=True,
+                        )
+                        st.markdown(
+                            f'<div class="toss-sub">일반 · {data["market_type"]}</div>',
+                            unsafe_allow_html=True,
+                        )
+                    with h2:
+                        st.markdown(
+                            '<div style="text-align: right;">'
+                            '<div style="color: #a0aab5; font-size: 0.75rem; margin-bottom: 2px;">현재가</div>'
+                            f'<div class="toss-current-price {profit_class}">{data["current_price_display"]}</div>'
+                            f'<div class="toss-profit-rate {profit_class}">{sign_str}{data["profit_rate"]:.2f}%</div>'
+                            "</div>",
                             unsafe_allow_html=True,
                         )
 
-                        g1, g2, g3, g4 = st.columns(4)
-                        with g1:
-                            st.markdown(
-                                f'<div class="toss-info-box"><div class="toss-info-label">보유수량</div><div class="toss-info-value">{data["shares_display"]}</div></div>',
-                                unsafe_allow_html=True,
-                            )
-                        with g2:
-                            st.markdown(
-                                f'<div class="toss-info-box"><div class="toss-info-label">평균단가</div><div class="toss-info-value">{data["avg_price_display"]}</div></div>',
-                                unsafe_allow_html=True,
-                            )
-                        with g3:
-                            st.markdown(
-                                f'<div class="toss-info-box"><div class="toss-info-label">투자원금</div><div class="toss-info-value">{data["invest_krw"]:,.0f}원</div></div>',
-                                unsafe_allow_html=True,
-                            )
-                        with g4:
-                            st.markdown(
-                                f'<div class="toss-info-box"><div class="toss-info-label">평가금액</div><div class="toss-info-value">{data["current_val_krw"]:,.0f}원</div></div>',
-                                unsafe_allow_html=True,
-                            )
+                    st.markdown(
+                        "<div style='margin-top: 14px;'></div>",
+                        unsafe_allow_html=True,
+                    )
 
-                        st.markdown("</div>", unsafe_allow_html=True)
+                    g1, g2, g3, g4 = st.columns(4)
+                    with g1:
+                        st.markdown(
+                            f'<div class="toss-info-box"><div class="toss-info-label">보유수량</div><div class="toss-info-value">{data["shares_display"]}</div></div>',
+                            unsafe_allow_html=True,
+                        )
+                    with g2:
+                        st.markdown(
+                            f'<div class="toss-info-box"><div class="toss-info-label">평균단가</div><div class="toss-info-value">{data["avg_price_display"]}</div></div>',
+                            unsafe_allow_html=True,
+                        )
+                    with g3:
+                        st.markdown(
+                            f'<div class="toss-info-box"><div class="toss-info-label">투자원금</div><div class="toss-info-value">{data["invest_krw"]:,.0f}원</div></div>',
+                            unsafe_allow_html=True,
+                        )
+                    with g4:
+                        st.markdown(
+                            f'<div class="toss-info-box"><div class="toss-info-label">평가금액</div><div class="toss-info-value">{data["current_val_krw"]:,.0f}원</div></div>',
+                            unsafe_allow_html=True,
+                        )
 
+                    st.markdown("</div>", unsafe_allow_html=True)
+
+                    # 차트 및 상세 분석은 필요할 때만 펼쳐볼 수 있도록 접이식으로 제공
+                    with st.expander(f"📈 {data['name']} 차트 및 상세 보기"):
                         period_option = st.radio(
                             "차트 기간 선택",
                             ["1일", "1주", "1달", "3달"],
