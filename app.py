@@ -7,7 +7,9 @@ import yfinance as yf
 # 🌐 웹페이지 기본 설정
 # ---------------------------------------------------------
 st.set_page_config(
-    page_title="석의 주식창 V3 - 투자원금 중심", page_icon="📈", layout="wide"
+    page_title="석의 주식창 V4 - 계좌별 보기 & 상세정보",
+    page_icon="📈",
+    layout="wide",
 )
 
 # ---------------------------------------------------------
@@ -34,47 +36,37 @@ st.markdown("""
         margin-bottom: 2rem;
     }
 
-    .section-header {
-        color: #ffffff;
-        font-size: 1.4rem;
-        font-weight: 600;
-        margin-top: 2.5rem;
-        margin-bottom: 1rem;
-        border-bottom: 2px solid #2a323e;
-        padding-bottom: 10px;
-    }
-
     .kpi-container {
         display: flex;
         gap: 20px;
-        margin-bottom: 20px;
+        margin-bottom: 25px;
     }
     
     .kpi-card {
         flex: 1;
         background-color: #161b22;
         border-radius: 12px;
-        padding: 25px;
+        padding: 20px;
         box-shadow: 0 4px 8px rgba(0,0,0,0.3);
         border: 1px solid #2a323e;
     }
 
     .kpi-label {
         color: #a0aab5;
-        font-size: 0.9rem;
-        margin-bottom: 8px;
+        font-size: 0.85rem;
+        margin-bottom: 6px;
     }
     
     .kpi-value {
-        font-size: 1.8rem;
+        font-size: 1.6rem;
         font-weight: 700;
         color: #ffffff;
     }
 
     .kpi-sub-value {
         color: #a0aab5;
-        font-size: 0.9rem;
-        margin-top: 5px;
+        font-size: 0.85rem;
+        margin-top: 4px;
     }
 
     .stock-card {
@@ -96,7 +88,7 @@ st.markdown("""
     .stock-name-area {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 12px;
     }
     
     .company-logo {
@@ -113,14 +105,14 @@ st.markdown("""
     }
 
     .company-name {
-        font-size: 1.2rem;
+        font-size: 1.15rem;
         font-weight: 600;
         line-height: 1.2;
     }
 
     .company-meta {
         color: #a0aab5;
-        font-size: 0.85rem;
+        font-size: 0.8rem;
         font-weight: 300;
     }
 
@@ -129,7 +121,7 @@ st.markdown("""
     }
 
     .current-price {
-        font-size: 1.4rem;
+        font-size: 1.3rem;
         font-weight: 700;
     }
 
@@ -150,13 +142,13 @@ st.markdown("""
     
     .info-label {
         color: #a0aab5;
-        font-size: 0.75rem;
+        font-size: 0.72rem;
         text-transform: uppercase;
         margin-bottom: 4px;
     }
 
     .info-value {
-        font-size: 1.1rem;
+        font-size: 1rem;
         font-weight: 600;
         color: #ffffff;
     }
@@ -168,18 +160,9 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 📂 전체 14개 보유 종목 데이터
+# 📂 전체 14개 종목 데이터 (요청하신 순서 반영)
 # ---------------------------------------------------------
 portfolio_data = [
-    {
-        "category": "카카오페이",
-        "name": "삼성전자",
-        "ticker": "005930.KS",
-        "shares": 20,
-        "avg_price": 126052,
-        "currency": "KRW",
-        "logo": "삼",
-    },
     {
         "category": "토스",
         "name": "SK하이닉스",
@@ -200,12 +183,12 @@ portfolio_data = [
     },
     {
         "category": "카카오페이",
-        "name": "엔비디아 (종합계좌)",
-        "ticker": "NVDA",
-        "shares": 2.748,
-        "avg_price": 192.28,
-        "currency": "USD",
-        "logo": "N",
+        "name": "삼성전자",
+        "ticker": "005930.KS",
+        "shares": 20,
+        "avg_price": 126052,
+        "currency": "KRW",
+        "logo": "삼",
     },
     {
         "category": "카카오페이",
@@ -224,33 +207,6 @@ portfolio_data = [
         "avg_price": 32015,
         "currency": "KRW",
         "logo": "우",
-    },
-    {
-        "category": "카카오페이",
-        "name": "엔비디아 (RIA계좌)",
-        "ticker": "NVDA",
-        "shares": 1,
-        "avg_price": 182.23,
-        "currency": "USD",
-        "logo": "N",
-    },
-    {
-        "category": "카카오페이",
-        "name": "NVDL",
-        "ticker": "NVDL",
-        "shares": 4.23,
-        "avg_price": 29.06,
-        "currency": "USD",
-        "logo": "N",
-    },
-    {
-        "category": "카카오페이",
-        "name": "크리에이트 엔터프라이즈",
-        "ticker": "CRE8",
-        "shares": 15,
-        "avg_price": 4.48,
-        "currency": "USD",
-        "logo": "C",
     },
     {
         "category": "카카오페이",
@@ -280,6 +236,33 @@ portfolio_data = [
         "logo": "K",
     },
     {
+        "category": "카카오페이",
+        "name": "엔비디아 (종합계좌)",
+        "ticker": "NVDA",
+        "shares": 2.748,
+        "avg_price": 192.28,
+        "currency": "USD",
+        "logo": "N",
+    },
+    {
+        "category": "카카오페이",
+        "name": "NVDL",
+        "ticker": "NVDL",
+        "shares": 4.23,
+        "avg_price": 29.06,
+        "currency": "USD",
+        "logo": "N",
+    },
+    {
+        "category": "카카오페이",
+        "name": "엔비디아 (RIA계좌)",
+        "ticker": "NVDA",
+        "shares": 1,
+        "avg_price": 182.23,
+        "currency": "USD",
+        "logo": "N",
+    },
+    {
         "category": "카카오페이(ISA)",
         "name": "TIGER 미국배당다우존스타겟커버드콜1호",
         "ticker": "476970.KS",
@@ -296,6 +279,15 @@ portfolio_data = [
         "avg_price": 26627,
         "currency": "KRW",
         "logo": "P",
+    },
+    {
+        "category": "토스",
+        "name": "크리에이트 엔터프라이즈",
+        "ticker": "CRE8",
+        "shares": 15,
+        "avg_price": 4.48,
+        "currency": "USD",
+        "logo": "C",
     },
 ]
 
@@ -317,20 +309,29 @@ def calculate_stock(item, exchange_rate):
     ticker = yf.Ticker(item["ticker"])
     try:
         hist = ticker.history(period="1d")
-        current_price = (
-            hist["Close"].iloc[-1] if not hist.empty else item["avg_price"]
-        )
+        if not hist.empty:
+            current_price = hist["Close"].iloc[-1]
+            high_price = hist["High"].iloc[-1]
+            low_price = hist["Low"].iloc[-1]
+        else:
+            current_price = item["avg_price"]
+            high_price = item["avg_price"]
+            low_price = item["avg_price"]
     except:
         current_price = item["avg_price"]
+        high_price = item["avg_price"]
+        low_price = item["avg_price"]
 
     if item["currency"] == "USD":
         invest_krw = item["avg_price"] * item["shares"] * exchange_rate
         current_val_krw = current_price * item["shares"] * exchange_rate
         current_price_display = f"${current_price:,.2f}"
+        high_low_display = f"${low_price:,.2f} ~ ${high_price:,.2f}"
     else:
         invest_krw = item["avg_price"] * item["shares"]
         current_val_krw = current_price * item["shares"]
         current_price_display = f"{current_price:,.0f}원"
+        high_low_display = f"{low_price:,.0f} ~ {high_price:,.0f}원"
 
     profit_krw = current_val_krw - invest_krw
     profit_rate = (profit_krw / invest_krw * 100) if invest_krw != 0 else 0
@@ -344,6 +345,7 @@ def calculate_stock(item, exchange_rate):
         "currency": item["currency"],
         "logo_char": item["logo"],
         "current_price_display": current_price_display,
+        "high_low_display": high_low_display,
         "invest_krw": invest_krw,
         "current_val_krw": current_val_krw,
         "profit_krw": profit_krw,
@@ -358,10 +360,11 @@ def calculate_stock(item, exchange_rate):
 st.title("석의 주식창")
 current_time = datetime.now().strftime("%Y년 %m월 %d일 (%a) %H:%M")
 st.markdown(
-    f"<div class='main-subtitle'>{current_time} · 실시간 시세 반영 중 (총 {len(portfolio_data)}개 종목)</div>",
+    f"<div class='main-subtitle'>{current_time} · 실시간 시세 및 고저가 반영 중</div>",
     unsafe_allow_html=True,
 )
 
+# 데이터 계산
 all_stock_data = []
 total_invest = 0
 total_current_val = 0
@@ -379,7 +382,7 @@ total_profit_rate = (
 )
 profit_class_total = "profit-pos" if total_profit >= 0 else "profit-neg"
 
-# 상단 요약 카드
+# 상단 요약 카드 (전체 기준)
 st.markdown(
     f"""
 <div class="kpi-container">
@@ -406,54 +409,78 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-st.markdown(
-    "<div class='section-header'>내 보유주식</div>", unsafe_allow_html=True
+# ---------------------------------------------------------
+# 📑 계좌별 탭 메뉴 (전체 보기 / 토스 / 카카오페이)
+# ---------------------------------------------------------
+tab_all, tab_toss, tab_kakao = st.tabs(
+    ["📊 전체 보기", "💳 토스 계좌", "💬 카카오페이 계좌"]
 )
 
-# 하단 종목 카드 배치 (14개 전체 출력)
-for data in all_stock_data:
-    profit_class = "profit-pos" if data["profit_rate"] >= 0 else "profit-neg"
-    avg_price_display = (
-        f"${data['avg_price']:,.2f}"
-        if data["currency"] == "USD"
-        else f"{data['avg_price']:,.0f}원"
-    )
 
-    st.markdown(
-        f"""
-    <div class="stock-card">
-        <div class="card-top">
-            <div class="stock-name-area">
-                <div class="company-logo">{data['logo_char']}</div>
-                <div>
-                    <div class="company-name">{data['name']}</div>
-                    <div class="company-meta">{data['category']} · {data['ticker']}</div>
+def render_stock_cards(data_list):
+    for data in data_list:
+        profit_class = "profit-pos" if data["profit_rate"] >= 0 else "profit-neg"
+        avg_price_display = (
+            f"${data['avg_price']:,.2f}"
+            if data["currency"] == "USD"
+            else f"{data['avg_price']:,.0f}원"
+        )
+
+        st.markdown(
+            f"""
+        <div class="stock-card">
+            <div class="card-top">
+                <div class="stock-name-area">
+                    <div class="company-logo">{data['logo_char']}</div>
+                    <div>
+                        <div class="company-name">{data['name']}</div>
+                        <div class="company-meta">{data['category']} · {data['ticker']}</div>
+                    </div>
+                </div>
+                <div class="card-price-area">
+                    <div class="current-price {profit_class}">{data['current_price_display']}</div>
+                    <div class="company-meta {profit_class}">{data['profit_rate']:.2f}%</div>
                 </div>
             </div>
-            <div class="card-price-area">
-                <div class="current-price {profit_class}">{data['current_price_display']}</div>
-                <div class="company-meta {profit_class}">{data['profit_rate']:.2f}%</div>
+            <div class="card-bottom-grid">
+                <div>
+                    <div class="info-label">보유수량 / 평단</div>
+                    <div class="info-value">{data['shares']:.3f}주 / {avg_price_display}</div>
+                </div>
+                <div>
+                    <div class="info-label">당일 최저 ~ 최고가</div>
+                    <div class="info-value" style="font-size: 0.9rem;">{data['high_low_display']}</div>
+                </div>
+                <div>
+                    <div class="info-label">평가손익</div>
+                    <div class="info-value {profit_class}">{data['profit_krw']:,.0f}원</div>
+                </div>
+                <div>
+                    <div class="info-label">평가금액 (종가기준)</div>
+                    <div class="info-value">{data['current_val_krw']:,.0f}원</div>
+                </div>
             </div>
         </div>
-        <div class="card-bottom-grid">
-            <div>
-                <div class="info-label">보유수량</div>
-                <div class="info-value">{data['shares']:.3f}주</div>
-            </div>
-            <div>
-                <div class="info-label">평균단가</div>
-                <div class="info-value">{avg_price_display}</div>
-            </div>
-            <div>
-                <div class="info-label">평가손익</div>
-                <div class="info-value {profit_class}">{data['profit_krw']:,.0f}원</div>
-            </div>
-            <div>
-                <div class="info-label">평가금액</div>
-                <div class="info-value">{data['current_val_krw']:,.0f}원</div>
-            </div>
-        </div>
-    </div>
-    """,
-        unsafe_allow_html=True,
-    )
+        """,
+            unsafe_allow_html=True,
+        )
+
+
+with tab_all:
+    render_stock_cards(all_stock_data)
+
+with tab_toss:
+    toss_data = [
+        d
+        for d in all_stock_data
+        if d["name"] in ["SK하이닉스", "SK스퀘어", "크리에이트 엔터프라이즈"]
+    ]
+    render_stock_cards(toss_data)
+
+with tab_kakao:
+    kakao_data = [
+        d
+        for d in all_stock_data
+        if d["name"] not in ["SK하이닉스", "SK스퀘어", "크리에이트 엔터프라이즈"]
+    ]
+    render_stock_cards(kakao_data)
