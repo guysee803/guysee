@@ -8,7 +8,7 @@ import yfinance as yf
 # 🌐 웹페이지 기본 설정
 # ---------------------------------------------------------
 st.set_page_config(
-    page_title="석의 주식창 V9 - 마켓 구분 표시 수정",
+    page_title="뽄의 주식창 V9 - 마켓 구분 표시 수정",
     page_icon="📈",
     layout="wide",
 )
