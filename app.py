@@ -168,9 +168,8 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 📂 데이터 및 로직 영역
+# 📂 전체 14개 보유 종목 데이터
 # ---------------------------------------------------------
-
 portfolio_data = [
     {
         "category": "카카오페이",
@@ -191,7 +190,7 @@ portfolio_data = [
         "logo": "S",
     },
     {
-        "category": "토ส",
+        "category": "토스",
         "name": "SK스퀘어",
         "ticker": "402340.KS",
         "shares": 2,
@@ -243,6 +242,60 @@ portfolio_data = [
         "avg_price": 29.06,
         "currency": "USD",
         "logo": "N",
+    },
+    {
+        "category": "카카오페이",
+        "name": "크리에이트 엔터프라이즈",
+        "ticker": "CRE8",
+        "shares": 15,
+        "avg_price": 4.48,
+        "currency": "USD",
+        "logo": "C",
+    },
+    {
+        "category": "카카오페이",
+        "name": "TIGER 200",
+        "ticker": "102110.KS",
+        "shares": 1,
+        "avg_price": 100995,
+        "currency": "KRW",
+        "logo": "T",
+    },
+    {
+        "category": "카카오페이",
+        "name": "KODEX 200",
+        "ticker": "069500.KS",
+        "shares": 1,
+        "avg_price": 101155,
+        "currency": "KRW",
+        "logo": "K",
+    },
+    {
+        "category": "카카오페이",
+        "name": "KODEX 코스닥150",
+        "ticker": "229200.KS",
+        "shares": 1,
+        "avg_price": 20100,
+        "currency": "KRW",
+        "logo": "K",
+    },
+    {
+        "category": "카카오페이(ISA)",
+        "name": "TIGER 미국배당다우존스타겟커버드콜1호",
+        "ticker": "476970.KS",
+        "shares": 13,
+        "avg_price": 13506,
+        "currency": "KRW",
+        "logo": "T",
+    },
+    {
+        "category": "카카오페이",
+        "name": "PLUS 고배당주",
+        "ticker": "294230.KS",
+        "shares": 5,
+        "avg_price": 26627,
+        "currency": "KRW",
+        "logo": "P",
     },
 ]
 
@@ -305,7 +358,7 @@ def calculate_stock(item, exchange_rate):
 st.title("석의 주식창")
 current_time = datetime.now().strftime("%Y년 %m월 %d일 (%a) %H:%M")
 st.markdown(
-    f"<div class='main-subtitle'>{current_time} · 실시간 시세 반영 중</div>",
+    f"<div class='main-subtitle'>{current_time} · 실시간 시세 반영 중 (총 {len(portfolio_data)}개 종목)</div>",
     unsafe_allow_html=True,
 )
 
@@ -357,7 +410,7 @@ st.markdown(
     "<div class='section-header'>내 보유주식</div>", unsafe_allow_html=True
 )
 
-# 하단 종목 카드 배치
+# 하단 종목 카드 배치 (14개 전체 출력)
 for data in all_stock_data:
     profit_class = "profit-pos" if data["profit_rate"] >= 0 else "profit-neg"
     avg_price_display = (
