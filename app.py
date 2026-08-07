@@ -8,13 +8,13 @@ import yfinance as yf
 # 🌐 웹페이지 기본 설정
 # ---------------------------------------------------------
 st.set_page_config(
-    page_title="석의 주식창 V16 - 종목별 테두리 및 레이아웃 최적화",
+    page_title="석의 주식창 V17 - 네이티브 테두리 적용",
     page_icon="📈",
     layout="wide",
 )
 
 # ---------------------------------------------------------
-# 🎨 고급 CSS 스타일링 (종목별 선명한 테두리 및 카드 디자인)
+# 🎨 고급 CSS 스타일링
 # ---------------------------------------------------------
 st.markdown(
     """
@@ -71,16 +71,6 @@ st.markdown(
         margin-top: 4px;
     }
 
-    /* 토스 스타일 주식 카드 배경 및 테두리 */
-    .toss-card-bg {
-        background-color: #161b22;
-        border-radius: 16px;
-        padding: 20px;
-        margin-bottom: 16px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-        border: 1.5px solid #3b434f;
-    }
-
     .toss-badge {
         display: inline-block;
         background-color: #e5a93b;
@@ -122,7 +112,6 @@ st.markdown(
         color: #3182f6 !important;
     }
 
-    /* 하단 4개 정보 박스 디자인 */
     .toss-info-box {
         background-color: #1f2630;
         border-radius: 10px;
@@ -415,180 +404,186 @@ def render_stock_grid(data_list, tab_prefix):
                 sign_str = "+" if data["profit_rate"] >= 0 else ""
 
                 with cols[j]:
-                    # 종목별 테두리가 적용된 카드 컨테이너 시작
-                    st.markdown(
-                        '<div class="toss-card-bg">', unsafe_allow_html=True
-                    )
+                    # Streamlit 내장 컨테이너와 테두리(border=True) 사용
+                    with st.container(border=True):
+                        h1, h2 = st.columns([1.1, 1])
+                        with h1:
+                            st.markdown(
+                                f'<div class="toss-badge">{data["category"]}</div>',
+                                unsafe_allow_html=True,
+                            )
+                            st.markdown(
+                                f'<div class="toss-title">{data["name"]}</div>',
+                                unsafe_allow_html=True,
+                            )
+                            st.markdown(
+                                f'<div class="toss-sub">일반 · {data["market_type"]}</div>',
+                                unsafe_allow_html=True,
+                            )
+                        with h2:
+                            st.markdown(
+                                '<div style="text-align: right;">'
+                                '<div style="color: #a0aab5; font-size: 0.75rem; margin-bottom: 2px;">현재가</div>'
+                                f'<div class="toss-current-price {profit_class}">{data["current_price_display"]}</div>'
+                                f'<div class="toss-profit-rate {profit_class}">{sign_str}{data["profit_rate"]:.2f}%</div>'
+                                "</div>",
+                                unsafe_allow_html=True,
+                            )
 
-                    h1, h2 = st.columns([1.1, 1])
-                    with h1:
                         st.markdown(
-                            f'<div class="toss-badge">{data["category"]}</div>',
-                            unsafe_allow_html=True,
-                        )
-                        st.markdown(
-                            f'<div class="toss-title">{data["name"]}</div>',
-                            unsafe_allow_html=True,
-                        )
-                        st.markdown(
-                            f'<div class="toss-sub">일반 · {data["market_type"]}</div>',
-                            unsafe_allow_html=True,
-                        )
-                    with h2:
-                        st.markdown(
-                            '<div style="text-align: right;">'
-                            '<div style="color: #a0aab5; font-size: 0.75rem; margin-bottom: 2px;">현재가</div>'
-                            f'<div class="toss-current-price {profit_class}">{data["current_price_display"]}</div>'
-                            f'<div class="toss-profit-rate {profit_class}">{sign_str}{data["profit_rate"]:.2f}%</div>'
-                            "</div>",
-                            unsafe_allow_html=True,
-                        )
-
-                    st.markdown(
-                        "<div style='margin-top: 14px;'></div>",
-                        unsafe_allow_html=True,
-                    )
-
-                    g1, g2, g3, g4 = st.columns(4)
-                    with g1:
-                        st.markdown(
-                            f'<div class="toss-info-box"><div class="toss-info-label">보유수량</div><div class="toss-info-value">{data["shares_display"]}</div></div>',
-                            unsafe_allow_html=True,
-                        )
-                    with g2:
-                        st.markdown(
-                            f'<div class="toss-info-box"><div class="toss-info-label">평균단가</div><div class="toss-info-value">{data["avg_price_display"]}</div></div>',
-                            unsafe_allow_html=True,
-                        )
-                    with g3:
-                        st.markdown(
-                            f'<div class="toss-info-box"><div class="toss-info-label">투자원금</div><div class="toss-info-value">{data["invest_krw"]:,.0f}원</div></div>',
-                            unsafe_allow_html=True,
-                        )
-                    with g4:
-                        st.markdown(
-                            f'<div class="toss-info-box"><div class="toss-info-label">평가금액</div><div class="toss-info-value">{data["current_val_krw"]:,.0f}원</div></div>',
+                            "<div style='margin-top: 14px;'></div>",
                             unsafe_allow_html=True,
                         )
 
-                    st.markdown("</div>", unsafe_allow_html=True)  # 카드 컨테이너 종료
+                        g1, g2, g3, g4 = st.columns(4)
+                        with g1:
+                            st.markdown(
+                                f'<div class="toss-info-box"><div class="toss-info-label">보유수량</div><div class="toss-info-value">{data["shares_display"]}</div></div>',
+                                unsafe_allow_html=True,
+                            )
+                        with g2:
+                            st.markdown(
+                                f'<div class="toss-info-box"><div class="toss-info-label">평균단가</div><div class="toss-info-value">{data["avg_price_display"]}</div></div>',
+                                unsafe_allow_html=True,
+                            )
+                        with g3:
+                            st.markdown(
+                                f'<div class="toss-info-box"><div class="toss-info-label">투자원금</div><div class="toss-info-value">{data["invest_krw"]:,.0f}원</div></div>',
+                                unsafe_allow_html=True,
+                            )
+                        with g4:
+                            st.markdown(
+                                f'<div class="toss-info-box"><div class="toss-info-label">평가금액</div><div class="toss-info-value">{data["current_val_krw"]:,.0f}원</div></div>',
+                                unsafe_allow_html=True,
+                            )
 
-                    # 차트 및 상세 분석 접이식 영역
-                    with st.expander(f"📈 {data['name']} 차트 및 상세 보기"):
-                        period_option = st.radio(
-                            "차트 기간 선택",
-                            ["1일", "1주", "1달", "3달"],
-                            horizontal=True,
-                            key=f"radio_{tab_prefix}_{data['category']}_{data['ticker']}_{data['name']}_{i}_{j}",
+                        st.markdown(
+                            "<div style='margin-top: 10px;'></div>",
+                            unsafe_allow_html=True,
                         )
 
-                        period_map = {
-                            "1일": ("1d", "5m"),
-                            "1주": ("5d", "30m"),
-                            "1달": ("1mo", "1d"),
-                            "3달": ("3mo", "1d"),
-                        }
-                        p, inter = period_map[period_option]
+                        # 차트 및 상세 분석 보기
+                        with st.expander(f"📈 {data['name']} 차트 보기"):
+                            period_option = st.radio(
+                                "차트 기간 선택",
+                                ["1일", "1주", "1달", "3달"],
+                                horizontal=True,
+                                key=f"radio_{tab_prefix}_{data['category']}_{data['ticker']}_{data['name']}_{i}_{j}",
+                            )
 
-                        try:
-                            t_obj = yf.Ticker(data["ticker"])
-                            df = t_obj.history(period=p, interval=inter)
+                            period_map = {
+                                "1일": ("1d", "5m"),
+                                "1주": ("5d", "30m"),
+                                "1달": ("1mo", "1d"),
+                                "3달": ("3mo", "1d"),
+                            }
+                            p, inter = period_map[period_option]
 
-                            if not df.empty:
-                                df["MA5"] = (
-                                    df["Close"].rolling(window=5).mean()
-                                )
-                                df["MA10"] = (
-                                    df["Close"].rolling(window=10).mean()
-                                )
-                                df["MA20"] = (
-                                    df["Close"].rolling(window=20).mean()
-                                )
-                                df["MA60"] = (
-                                    df["Close"].rolling(window=60).mean()
-                                )
-                                df["MA120"] = (
-                                    df["Close"].rolling(window=120).mean()
-                                )
+                            try:
+                                t_obj = yf.Ticker(data["ticker"])
+                                df = t_obj.history(period=p, interval=inter)
 
-                                fig = go.Figure()
-                                fig.add_trace(
-                                    go.Scatter(
-                                        x=df.index,
-                                        y=df["Close"],
-                                        mode="lines",
-                                        name="종가",
-                                        line=dict(color="#ffffff", width=1.5),
+                                if not df.empty:
+                                    df["MA5"] = (
+                                        df["Close"].rolling(window=5).mean()
                                     )
-                                )
-                                fig.add_trace(
-                                    go.Scatter(
-                                        x=df.index,
-                                        y=df["MA5"],
-                                        mode="lines",
-                                        name="MA 5",
-                                        line=dict(color="#f04452", width=1.2),
+                                    df["MA10"] = (
+                                        df["Close"].rolling(window=10).mean()
                                     )
-                                )
-                                fig.add_trace(
-                                    go.Scatter(
-                                        x=df.index,
-                                        y=df["MA10"],
-                                        mode="lines",
-                                        name="MA 10",
-                                        line=dict(color="#e5a93b", width=1.2),
+                                    df["MA20"] = (
+                                        df["Close"].rolling(window=20).mean()
                                     )
-                                )
-                                fig.add_trace(
-                                    go.Scatter(
-                                        x=df.index,
-                                        y=df["MA20"],
-                                        mode="lines",
-                                        name="MA 20",
-                                        line=dict(color="#3182f6", width=1.2),
+                                    df["MA60"] = (
+                                        df["Close"].rolling(window=60).mean()
                                     )
-                                )
-                                fig.add_trace(
-                                    go.Scatter(
-                                        x=df.index,
-                                        y=df["MA60"],
-                                        mode="lines",
-                                        name="MA 60",
-                                        line=dict(color="#9b5de5", width=1.2),
+                                    df["MA120"] = (
+                                        df["Close"].rolling(window=120).mean()
                                     )
-                                )
-                                fig.add_trace(
-                                    go.Scatter(
-                                        x=df.index,
-                                        y=df["MA120"],
-                                        mode="lines",
-                                        name="MA 120",
-                                        line=dict(color="#00b4d8", width=1.2),
-                                    )
-                                )
 
-                                fig.update_layout(
-                                    margin=dict(l=10, r=10, t=20, b=10),
-                                    height=300,
-                                    paper_bgcolor="#161b22",
-                                    plot_bgcolor="#161b22",
-                                    font=dict(color="#a0aab5"),
-                                    legend=dict(
-                                        orientation="h",
-                                        yanchor="bottom",
-                                        y=1.02,
-                                        xanchor="right",
-                                        x=1,
-                                    ),
-                                    xaxis=dict(showgrid=True, gridcolor="#2a323e"),
-                                    yaxis=dict(showgrid=True, gridcolor="#2a323e"),
-                                )
+                                    fig = go.Figure()
+                                    fig.add_trace(
+                                        go.Scatter(
+                                            x=df.index,
+                                            y=df["Close"],
+                                            mode="lines",
+                                            name="종가",
+                                            line=dict(color="#ffffff", width=1.5),
+                                        )
+                                    )
+                                    fig.add_trace(
+                                        go.Scatter(
+                                            x=df.index,
+                                            y=df["MA5"],
+                                            mode="lines",
+                                            name="MA 5",
+                                            line=dict(color="#f04452", width=1.2),
+                                        )
+                                    )
+                                    fig.add_trace(
+                                        go.Scatter(
+                                            x=df.index,
+                                            y=df["MA10"],
+                                            mode="lines",
+                                            name="MA 10",
+                                            line=dict(color="#e5a93b", width=1.2),
+                                        )
+                                    )
+                                    fig.add_trace(
+                                        go.Scatter(
+                                            x=df.index,
+                                            y=df["MA20"],
+                                            mode="lines",
+                                            name="MA 20",
+                                            line=dict(color="#3182f6", width=1.2),
+                                        )
+                                    )
+                                    fig.add_trace(
+                                        go.Scatter(
+                                            x=df.index,
+                                            y=df["MA60"],
+                                            mode="lines",
+                                            name="MA 60",
+                                            line=dict(color="#9b5de5", width=1.2),
+                                        )
+                                    )
+                                    fig.add_trace(
+                                        go.Scatter(
+                                            x=df.index,
+                                            y=df["MA120"],
+                                            mode="lines",
+                                            name="MA 120",
+                                            line=dict(color="#00b4d8", width=1.2),
+                                        )
+                                    )
 
-                                st.plotly_chart(fig, use_container_width=True)
-                            else:
-                                st.info("차트 데이터가 없습니다.")
-                        except Exception:
-                            st.error("차트 로딩 중 오류 발생")
+                                    fig.update_layout(
+                                        margin=dict(l=10, r=10, t=20, b=10),
+                                        height=300,
+                                        paper_bgcolor="#161b22",
+                                        plot_bgcolor="#161b22",
+                                        font=dict(color="#a0aab5"),
+                                        legend=dict(
+                                            orientation="h",
+                                            yanchor="bottom",
+                                            y=1.02,
+                                            xanchor="right",
+                                            x=1,
+                                        ),
+                                        xaxis=dict(
+                                            showgrid=True, gridcolor="#2a323e"
+                                        ),
+                                        yaxis=dict(
+                                            showgrid=True, gridcolor="#2a323e"
+                                        ),
+                                    )
+
+                                    st.plotly_chart(
+                                        fig, use_container_width=True
+                                    )
+                                else:
+                                    st.info("차트 데이터가 없습니다.")
+                            except Exception:
+                                st.error("차트 로딩 중 오류 발생")
 
 
 with tab_all:
