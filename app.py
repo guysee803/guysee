@@ -8,13 +8,13 @@ import yfinance as yf
 # 🌐 웹페이지 기본 설정
 # ---------------------------------------------------------
 st.set_page_config(
-    page_title="석의 주식창 V15 - 메인 시세 상시 노출",
+    page_title="석의 주식창 V16 - 종목별 테두리 및 레이아웃 최적화",
     page_icon="📈",
     layout="wide",
 )
 
 # ---------------------------------------------------------
-# 🎨 고급 CSS 스타일링 (토스앱 스타일 카드 디자인)
+# 🎨 고급 CSS 스타일링 (종목별 선명한 테두리 및 카드 디자인)
 # ---------------------------------------------------------
 st.markdown(
     """
@@ -50,7 +50,7 @@ st.markdown(
         border-radius: 16px;
         padding: 20px;
         box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-        border: 1px solid #2a323e;
+        border: 1px solid #30363d;
     }
 
     .kpi-label {
@@ -71,14 +71,14 @@ st.markdown(
         margin-top: 4px;
     }
 
-    /* 토스 스타일 주식 카드 배경 */
+    /* 토스 스타일 주식 카드 배경 및 테두리 */
     .toss-card-bg {
         background-color: #161b22;
-        border-radius: 20px;
+        border-radius: 16px;
         padding: 20px;
         margin-bottom: 16px;
-        box-shadow: 0 6px 12px rgba(0,0,0,0.25);
-        border: 1px solid #2a323e;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        border: 1.5px solid #3b434f;
     }
 
     .toss-badge {
@@ -125,8 +125,9 @@ st.markdown(
     /* 하단 4개 정보 박스 디자인 */
     .toss-info-box {
         background-color: #1f2630;
-        border-radius: 12px;
+        border-radius: 10px;
         padding: 10px 12px;
+        border: 1px solid #2a323e;
     }
 
     .toss-info-label {
@@ -414,7 +415,7 @@ def render_stock_grid(data_list, tab_prefix):
                 sign_str = "+" if data["profit_rate"] >= 0 else ""
 
                 with cols[j]:
-                    # 카드 전체를 항상 눈에 보이도록 배치
+                    # 종목별 테두리가 적용된 카드 컨테이너 시작
                     st.markdown(
                         '<div class="toss-card-bg">', unsafe_allow_html=True
                     )
@@ -470,9 +471,9 @@ def render_stock_grid(data_list, tab_prefix):
                             unsafe_allow_html=True,
                         )
 
-                    st.markdown("</div>", unsafe_allow_html=True)
+                    st.markdown("</div>", unsafe_allow_html=True)  # 카드 컨테이너 종료
 
-                    # 차트 및 상세 분석은 필요할 때만 펼쳐볼 수 있도록 접이식으로 제공
+                    # 차트 및 상세 분석 접이식 영역
                     with st.expander(f"📈 {data['name']} 차트 및 상세 보기"):
                         period_option = st.radio(
                             "차트 기간 선택",
