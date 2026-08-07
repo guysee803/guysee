@@ -8,7 +8,7 @@ import yfinance as yf
 # 🌐 웹페이지 기본 설정
 # ---------------------------------------------------------
 st.set_page_config(
-    page_title="석의 주식창 V22",
+    page_title="석의 주식창 V23",
     page_icon="📈",
     layout="wide",
 )
@@ -140,7 +140,7 @@ st.markdown(
 )
 
 # ---------------------------------------------------------
-# 📂 전체 종목 데이터 정의 (위치 수정 완료)
+# 📂 전체 종목 데이터 정의 (요청사항 반영 완료)
 # ---------------------------------------------------------
 portfolio_data = [
     # 토스증권 (3종목)
@@ -168,7 +168,7 @@ portfolio_data = [
         "avg_price": 4.48,
         "currency": "USD",
     },
-    # 카카오페이 일반 (8종목) - PLUS 고배당주 포함
+    # 카카오페이 일반 (8종목) - KODEX 코스닥150 포함
     {
         "category": "카카오페이 일반",
         "name": "삼성전자",
@@ -227,10 +227,10 @@ portfolio_data = [
     },
     {
         "category": "카카오페이 일반",
-        "name": "PLUS 고배당주",
-        "ticker": "294230.KS",
-        "shares": 5,
-        "avg_price": 26627,
+        "name": "KODEX 코스닥150",
+        "ticker": "229200.KS",
+        "shares": 1,
+        "avg_price": 20100,
         "currency": "KRW",
     },
     # 카카오페이 RIA (1종목)
@@ -242,7 +242,7 @@ portfolio_data = [
         "avg_price": 182.23,
         "currency": "USD",
     },
-    # 카카오페이 ISA (2종목) - KODEX 코스닥150 포함
+    # 카카오페이 ISA (2종목) - PLUS 고배당주 포함
     {
         "category": "카카오페이 ISA",
         "name": "TIGER 미국배당다우존스타겟커버드콜1호",
@@ -253,10 +253,10 @@ portfolio_data = [
     },
     {
         "category": "카카오페이 ISA",
-        "name": "KODEX 코스닥150",
-        "ticker": "229200.KS",
-        "shares": 1,
-        "avg_price": 20100,
+        "name": "PLUS 고배당주",
+        "ticker": "294230.KS",
+        "shares": 5,
+        "avg_price": 26627,
         "currency": "KRW",
     },
 ]
