@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 import pandas as pd
 import streamlit as st
 import yfinance as yf
@@ -354,13 +354,25 @@ def calculate_stock(item, exchange_rate):
 
 
 # ---------------------------------------------------------
-# 🖥️ 화면 렌더링
+# 🖥️ 화면 렌더링 (KST 및 UTC 시간 분리 표기)
 # ---------------------------------------------------------
 
 st.title("석의 주식창")
-current_time = datetime.now().strftime("%Y년 %m월 %d일 (%a) %H:%M")
+
+# 한국 시간(KST, UTC+9)과 협정 세계시(UTC) 생성
+kst = timezone(timedelta(hours=9))
+utc = timezone.utc
+
+time_kst = datetime.now(kst).strftime("%Y년 %m월 %d일 (%a) %H:%M")
+time_utc = datetime.now(utc).strftime("%Y년 %m월 %d일 (%a) %H:%M")
+
 st.markdown(
-    f"<div class='main-subtitle'>{current_time} · 실시간 시세 및 고저가 반영 중</div>",
+    f"""
+<div class='main-subtitle'>
+    🇰🇷 <b>한국 시간 (KST):</b> {time_kst} &nbsp;&nbsp;|&nbsp;&nbsp; 🌍 <b>협정 세계시 (UTC):</b> {time_utc} <br>
+    <span style="color: #a0aab5; font-size: 0.9rem;">실시간 시세 및 고저가 반영 중</span>
+</div>
+""",
     unsafe_allow_html=True,
 )
 
