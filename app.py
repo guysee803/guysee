@@ -8,7 +8,7 @@ import yfinance as yf
 # 🌐 웹페이지 기본 설정
 # ---------------------------------------------------------
 st.set_page_config(
-    page_title="석의 주식창 V21",
+    page_title="석의 주식창 V22",
     page_icon="📈",
     layout="wide",
 )
@@ -140,7 +140,7 @@ st.markdown(
 )
 
 # ---------------------------------------------------------
-# 📂 전체 종목 데이터 정의
+# 📂 전체 종목 데이터 정의 (위치 수정 완료)
 # ---------------------------------------------------------
 portfolio_data = [
     # 토스증권 (3종목)
@@ -168,7 +168,7 @@ portfolio_data = [
         "avg_price": 4.48,
         "currency": "USD",
     },
-    # 카카오페이 일반 (8종목)
+    # 카카오페이 일반 (8종목) - PLUS 고배당주 포함
     {
         "category": "카카오페이 일반",
         "name": "삼성전자",
@@ -242,7 +242,7 @@ portfolio_data = [
         "avg_price": 182.23,
         "currency": "USD",
     },
-    # 카카오페이 ISA (2종목)
+    # 카카오페이 ISA (2종목) - KODEX 코스닥150 포함
     {
         "category": "카카오페이 ISA",
         "name": "TIGER 미국배당다우존스타겟커버드콜1호",
@@ -348,7 +348,7 @@ total_profit_rate = (
 profit_class_total = "profit-pos" if total_profit >= 0 else "profit-neg"
 
 # ---------------------------------------------------------
-# 사이드바 메뉴 상태 관리 (카드를 누르면 연동됨)
+# 사이드바 메뉴 상태 관리
 # ---------------------------------------------------------
 menu_options = [
     "📊 전체 보기",
@@ -368,7 +368,6 @@ selected_view = st.sidebar.radio(
     index=menu_options.index(st.session_state.selected_menu),
 )
 
-# 사이드바와 세션 상태 동기화
 st.session_state.selected_menu = selected_view
 
 # ---------------------------------------------------------
@@ -417,7 +416,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# 2. 계좌별 자산 요약 카드 섹션 (클릭 시 사이드바 메뉴가 해당 계좌로 변경되며 즉시 이동)
+# 2. 계좌별 자산 요약 카드 섹션
 st.markdown("### 계좌별 자산")
 account_categories = [
     "토스증권",
@@ -463,7 +462,6 @@ for idx, acc_name in enumerate(account_categories):
             st.markdown(
                 "<div style='margin-top: 8px;'></div>", unsafe_allow_html=True
             )
-            # 카드의 버튼을 누르면 해당 메뉴로 세션이 바뀌고 화면이 리프레시됨
             target_menu_name = (
                 f"💳 {acc_name}" if "토스" in acc_name else f"💬 {acc_name}"
             )
@@ -675,7 +673,6 @@ def render_stock_grid(data_list, tab_prefix):
                                 st.error("차트 로딩 중 오류 발생")
 
 
-# 선택된 메뉴에 따라 화면 출력
 if st.session_state.selected_menu == "📊 전체 보기":
     st.subheader("📊 전체 종목 리스트")
     render_stock_grid(all_stock_data, "all")
