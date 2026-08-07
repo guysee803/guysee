@@ -8,7 +8,7 @@ import yfinance as yf
 # 🌐 웹페이지 기본 설정
 # ---------------------------------------------------------
 st.set_page_config(
-    page_title="석의 주식창 V17 - 네이티브 테두리 적용",
+    page_title="석의 주식창 V18 - 계좌별 요약 카드 추가",
     page_icon="📈",
     layout="wide",
 )
@@ -140,11 +140,12 @@ st.markdown(
 )
 
 # ---------------------------------------------------------
-# 📂 전체 14개 종목 데이터
+# 📂 전체 14개 종목 데이터 (계좌 분류 명확화)
 # ---------------------------------------------------------
 portfolio_data = [
+    # 토스증권 (3종목)
     {
-        "category": "토스",
+        "category": "토스증권",
         "name": "SK하이닉스",
         "ticker": "000660.KS",
         "shares": 2,
@@ -152,7 +153,7 @@ portfolio_data = [
         "currency": "KRW",
     },
     {
-        "category": "토스",
+        "category": "토스증권",
         "name": "SK스퀘어",
         "ticker": "402340.KS",
         "shares": 2,
@@ -160,7 +161,16 @@ portfolio_data = [
         "currency": "KRW",
     },
     {
-        "category": "카카오페이",
+        "category": "토스증권",
+        "name": "크리에이트 엔터프라이즈",
+        "ticker": "CRE8",
+        "shares": 15,
+        "avg_price": 4.48,
+        "currency": "USD",
+    },
+    # 카카오페이 일반 (8종목)
+    {
+        "category": "카카오페이 일반",
         "name": "삼성전자",
         "ticker": "005930.KS",
         "shares": 20,
@@ -168,7 +178,7 @@ portfolio_data = [
         "currency": "KRW",
     },
     {
-        "category": "카카오페이",
+        "category": "카카오페이 일반",
         "name": "두산에너빌리티",
         "ticker": "034020.KS",
         "shares": 10,
@@ -176,7 +186,7 @@ portfolio_data = [
         "currency": "KRW",
     },
     {
-        "category": "카카오페이",
+        "category": "카카오페이 일반",
         "name": "우리금융지주",
         "ticker": "316140.KS",
         "shares": 10,
@@ -184,7 +194,7 @@ portfolio_data = [
         "currency": "KRW",
     },
     {
-        "category": "카카오페이",
+        "category": "카카오페이 일반",
         "name": "TIGER 200",
         "ticker": "102110.KS",
         "shares": 1,
@@ -192,7 +202,7 @@ portfolio_data = [
         "currency": "KRW",
     },
     {
-        "category": "카카오페이",
+        "category": "카카오페이 일반",
         "name": "KODEX 200",
         "ticker": "069500.KS",
         "shares": 1,
@@ -200,7 +210,7 @@ portfolio_data = [
         "currency": "KRW",
     },
     {
-        "category": "카카오페이",
+        "category": "카카오페이 일반",
         "name": "KODEX 코스닥150",
         "ticker": "229200.KS",
         "shares": 1,
@@ -208,7 +218,7 @@ portfolio_data = [
         "currency": "KRW",
     },
     {
-        "category": "카카오페이",
+        "category": "카카오페이 일반",
         "name": "엔비디아 (종합계좌)",
         "ticker": "NVDA",
         "shares": 2.748,
@@ -216,7 +226,7 @@ portfolio_data = [
         "currency": "USD",
     },
     {
-        "category": "카카오페이",
+        "category": "카카오페이 일반",
         "name": "NVDL",
         "ticker": "NVDL",
         "shares": 4.23,
@@ -224,36 +234,30 @@ portfolio_data = [
         "currency": "USD",
     },
     {
-        "category": "카카오페이",
-        "name": "엔비디아 (RIA계좌)",
-        "ticker": "NVDA",
-        "shares": 1,
-        "avg_price": 182.23,
-        "currency": "USD",
-    },
-    {
-        "category": "카카오페이(ISA)",
-        "name": "TIGER 미국배당다우존스타겟커버드콜1호",
-        "ticker": "476970.KS",
-        "shares": 13,
-        "avg_price": 13506,
-        "currency": "KRW",
-    },
-    {
-        "category": "카카오페이",
+        "category": "카카오페이 일반",
         "name": "PLUS 고배당주",
         "ticker": "294230.KS",
         "shares": 5,
         "avg_price": 26627,
         "currency": "KRW",
     },
+    # 카카오페이 RIA (1종목)
     {
-        "category": "토스",
-        "name": "크리에이트 엔터프라이즈",
-        "ticker": "CRE8",
-        "shares": 15,
-        "avg_price": 4.48,
+        "category": "카카오페이 RIA",
+        "name": "엔비디아 (RIA계좌)",
+        "ticker": "NVDA",
+        "shares": 1,
+        "avg_price": 182.23,
         "currency": "USD",
+    },
+    # 카카오페이 ISA (2종목 - 기존 리스트 반영)
+    {
+        "category": "카카오페이 ISA",
+        "name": "TIGER 미국배당다우존스타겟커버드콜1호",
+        "ticker": "476970.KS",
+        "shares": 13,
+        "avg_price": 13506,
+        "currency": "KRW",
     },
 ]
 
@@ -361,6 +365,7 @@ total_profit_rate = (
 )
 profit_class_total = "profit-pos" if total_profit >= 0 else "profit-neg"
 
+# 1. 전체 자산 요약 KPI
 st.markdown(
     f"""
 <div class="kpi-container">
@@ -386,12 +391,71 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-tab_all, tab_toss, tab_kakao = st.tabs(
-    ["📊 전체 보기", "💳 토스 계좌", "💬 카카오페이 계좌"]
+# 2. 계좌별 자산 요약 카드 섹션 (스샷 스타일 반영)
+st.markdown("### 계좌별 자산")
+account_categories = [
+    "토스증권",
+    "카카오페이 일반",
+    "카카오페이 RIA",
+    "카카오페이 ISA",
+]
+acc_cols = st.columns(len(account_categories))
+
+for idx, acc_name in enumerate(account_categories):
+    acc_items = [d for d in all_stock_data if d["category"] == acc_name]
+    acc_invest = sum([d["invest_krw"] for d in acc_items])
+    acc_val = sum([d["current_val_krw"] for d in acc_items])
+    acc_profit = acc_val - acc_invest
+    acc_rate = (acc_profit / acc_invest * 100) if acc_invest != 0 else 0
+    acc_profit_class = "profit-pos" if acc_rate >= 0 else "profit-neg"
+    acc_sign = "+" if acc_rate >= 0 else ""
+
+    with acc_cols[idx]:
+        with st.container(border=True):
+            st.markdown(
+                f"<div style='font-size: 1.05rem; font-weight: 700; color: #ffffff;'>{acc_name}</div>",
+                unsafe_allow_html=True,
+            )
+            st.markdown(
+                f"<div style='color: #a0aab5; font-size: 0.8rem; margin-bottom: 12px;'>{len(acc_items)}종목</div>",
+                unsafe_allow_html=True,
+            )
+            st.markdown(
+                f"<div style='font-size: 1.35rem; font-weight: 700; color: #ffffff; margin-bottom: 6px;'>{acc_val:,.0f}원</div>",
+                unsafe_allow_html=True,
+            )
+
+            col_sub1, col_sub2 = st.columns([1.2, 1])
+            with col_sub1:
+                st.markdown(
+                    f"<div style='color: #a0aab5; font-size: 0.8rem;'>원금 {acc_invest:,.0f}원</div>",
+                    unsafe_allow_html=True,
+                )
+            with col_sub2:
+                st.markdown(
+                    f"<div class='{acc_profit_class}' style='font-size: 0.85rem; font-weight: 600; text-align: right;'>{acc_sign}{acc_rate:.2f}%</div>",
+                    unsafe_allow_html=True,
+                )
+
+st.markdown("<div style='margin-top: 20px;'></div>", unsafe_allow_html=True)
+
+# 3. 탭별 상세 종목 리스트
+tab_all, tab_toss, tab_kk_gen, tab_kk_ria, tab_kk_isa = st.tabs(
+    [
+        "📊 전체 보기",
+        "💳 토스증권",
+        "💬 카카오페이 일반",
+        "💬 카카오페이 RIA",
+        "💬 카카오페이 ISA",
+    ]
 )
 
 
 def render_stock_grid(data_list, tab_prefix):
+    if not data_list:
+        st.info("해당 계좌에 등록된 종목이 없습니다.")
+        return
+
     for i in range(0, len(data_list), 2):
         cols = st.columns(2)
 
@@ -404,7 +468,6 @@ def render_stock_grid(data_list, tab_prefix):
                 sign_str = "+" if data["profit_rate"] >= 0 else ""
 
                 with cols[j]:
-                    # Streamlit 내장 컨테이너와 테두리(border=True) 사용
                     with st.container(border=True):
                         h1, h2 = st.columns([1.1, 1])
                         with h1:
@@ -462,7 +525,6 @@ def render_stock_grid(data_list, tab_prefix):
                             unsafe_allow_html=True,
                         )
 
-                        # 차트 및 상세 분석 보기
                         with st.expander(f"📈 {data['name']} 차트 보기"):
                             period_option = st.radio(
                                 "차트 기간 선택",
@@ -590,17 +652,24 @@ with tab_all:
     render_stock_grid(all_stock_data, "all")
 
 with tab_toss:
-    toss_data = [
-        d
-        for d in all_stock_data
-        if d["name"] in ["SK하이닉스", "SK스퀘어", "크리에이트 엔터프라이즈"]
-    ]
-    render_stock_grid(toss_data, "toss")
+    render_stock_grid(
+        [d for d in all_stock_data if d["category"] == "토스증권"], "toss"
+    )
 
-with tab_kakao:
-    kakao_data = [
-        d
-        for d in all_stock_data
-        if d["name"] not in ["SK하이닉스", "SK스퀘어", "크리에이트 엔터프라이즈"]
-    ]
-    render_stock_grid(kakao_data, "kakao")
+with tab_kk_gen:
+    render_stock_grid(
+        [d for d in all_stock_data if d["category"] == "카카오페이 일반"],
+        "kk_gen",
+    )
+
+with tab_kk_ria:
+    render_stock_grid(
+        [d for d in all_stock_data if d["category"] == "카카오페이 RIA"],
+        "kk_ria",
+    )
+
+with tab_kk_isa:
+    render_stock_grid(
+        [d for d in all_stock_data if d["category"] == "카카오페이 ISA"],
+        "kk_isa",
+    )
