@@ -437,6 +437,12 @@ def render_stock_cards(data_list):
             if data["currency"] == "USD"
             else f"{data['avg_price']:,.0f}원"
         )
+        
+        # 소수점 처리 로직: 소수점 이하가 0이면 정수로, 아니면 소수점까지 표시
+        if data['shares'] == int(data['shares']):
+            shares_display = f"{int(data['shares'])}주"
+        else:
+            shares_display = f"{data['shares']:.3f}주"
 
         st.markdown(
             f"""
@@ -457,7 +463,7 @@ def render_stock_cards(data_list):
             <div class="card-bottom-grid">
                 <div>
                     <div class="info-label">보유수량 / 평단</div>
-                    <div class="info-value">{data['shares']:.3f}주 / {avg_price_display}</div>
+                    <div class="info-value">{shares_display} / {avg_price_display}</div>
                 </div>
                 <div>
                     <div class="info-label">당일 최저 ~ 최고가</div>
