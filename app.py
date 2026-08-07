@@ -8,13 +8,13 @@ import yfinance as yf
 # 🌐 웹페이지 기본 설정
 # ---------------------------------------------------------
 st.set_page_config(
-    page_title="석의 주식창 V12 - 네이티브 컴포넌트 안정 버전",
+    page_title="석의 주식창 V13 - 2열 카드 그리드 레이아웃",
     page_icon="📈",
     layout="wide",
 )
 
 # ---------------------------------------------------------
-# 🎨 고급 CSS 스타일링 (토스앱 스타일 커스텀)
+# 🎨 고급 CSS 스타일링 (2열 카드 및 토스앱 스타일)
 # ---------------------------------------------------------
 st.markdown(
     """
@@ -71,11 +71,11 @@ st.markdown(
         margin-top: 4px;
     }
 
-    /* 토스 스타일 주식 카드 컨테이너 배경 */
+    /* 토스 스타일 주식 카드 배경 */
     .toss-card-bg {
         background-color: #161b22;
         border-radius: 20px;
-        padding: 24px;
+        padding: 22px;
         margin-bottom: 16px;
         box-shadow: 0 6px 12px rgba(0,0,0,0.25);
         border: 1px solid #2a323e;
@@ -87,30 +87,30 @@ st.markdown(
         color: #1c1c1c;
         font-size: 0.75rem;
         font-weight: 700;
-        padding: 4px 10px;
+        padding: 3px 9px;
         border-radius: 20px;
-        margin-bottom: 8px;
+        margin-bottom: 6px;
     }
 
     .toss-title {
-        font-size: 1.4rem;
+        font-size: 1.3rem;
         font-weight: 700;
         color: #ffffff;
-        margin-bottom: 4px;
+        margin-bottom: 2px;
     }
 
     .toss-sub {
         color: #a0aab5;
-        font-size: 0.85rem;
+        font-size: 0.8rem;
     }
 
     .toss-current-price {
-        font-size: 1.6rem;
+        font-size: 1.5rem;
         font-weight: 700;
     }
 
     .toss-profit-rate {
-        font-size: 0.95rem;
+        font-size: 0.9rem;
         font-weight: 600;
         margin-top: 2px;
     }
@@ -125,18 +125,18 @@ st.markdown(
     /* 하단 4개 정보 박스 디자인 */
     .toss-info-box {
         background-color: #1f2630;
-        border-radius: 14px;
-        padding: 14px 16px;
+        border-radius: 12px;
+        padding: 12px 14px;
     }
 
     .toss-info-label {
         color: #a0aab5;
-        font-size: 0.8rem;
-        margin-bottom: 6px;
+        font-size: 0.75rem;
+        margin-bottom: 4px;
     }
 
     .toss-info-value {
-        font-size: 1.05rem;
+        font-size: 0.95rem;
         font-weight: 700;
         color: #ffffff;
     }
@@ -401,207 +401,201 @@ tab_all, tab_toss, tab_kakao = st.tabs(
 )
 
 
-def render_stock_cards(data_list):
-    for data in data_list:
-        profit_class = "profit-pos" if data["profit_rate"] >= 0 else "profit-neg"
-        sign_str = "+" if data["profit_rate"] >= 0 else ""
+def render_stock_grid(data_list):
+    # 2개씩 짝지어서 한 행(row)에 배치
+    for i in range(0, len(data_list), 2):
+        cols = st.columns(2)
 
-        with st.expander(
-            f"📌 {data['name']} - 현재가: {data['current_price_display']} ({sign_str}{data['profit_rate']:.2f}%)"
-        ):
-            # 토스 스타일 카드 외부 컨테이너 시작
-            st.markdown('<div class="toss-card-bg">', unsafe_allow_html=True)
-
-            # 상단 헤더 영역 (종목명 & 현재가 배치)
-            col_left, col_right = st.columns([1.2, 1])
-
-            with col_left:
-                st.markdown(
-                    f'<div class="toss-badge">{data["category"]}</div>',
-                    unsafe_allow_html=True,
+        for j in range(2):
+            if i + j < len(data_list):
+                data = data_list[i + j]
+                profit_class = (
+                    "profit-pos" if data["profit_rate"] >= 0 else "profit-neg"
                 )
-                st.markdown(
-                    f'<div class="toss-title">{data["name"]}</div>',
-                    unsafe_allow_html=True,
-                )
-                st.markdown(
-                    f'<div class="toss-sub">일반 · {data["market_type"]}</div>',
-                    unsafe_allow_html=True,
-                )
+                sign_str = "+" if data["profit_rate"] >= 0 else ""
 
-            with col_right:
-                st.markdown(
-                    '<div style="text-align: right;">'
-                    '<div style="color: #a0aab5; font-size: 0.8rem; margin-bottom: 2px;">현재가</div>'
-                    f'<div class="toss-current-price {profit_class}">{data["current_price_display"]}</div>'
-                    f'<div class="toss-profit-rate {profit_class}">{sign_str}{data["profit_rate"]:.2f}%</div>'
-                    "</div>",
-                    unsafe_allow_html=True,
-                )
-
-            st.markdown("<div style='margin-top: 20px;'></div>", unsafe_allow_html=True)
-
-            # 하단 4개 정보 박스 그리드 (Streamlit 네이티브 컬럼 사용)
-            g1, g2, g3, g4 = st.columns(4)
-
-            with g1:
-                st.markdown(
-                    f"""
-                <div class="toss-info-box">
-                    <div class="toss-info-label">보유수량</div>
-                    <div class="toss-info-value">{data['shares_display']}</div>
-                </div>
-                """,
-                    unsafe_allow_html=True,
-                )
-
-            with g2:
-                st.markdown(
-                    f"""
-                <div class="toss-info-box">
-                    <div class="toss-info-label">평균단가</div>
-                    <div class="toss-info-value">{data['avg_price_display']}</div>
-                </div>
-                """,
-                    unsafe_allow_html=True,
-                )
-
-            with g3:
-                st.markdown(
-                    f"""
-                <div class="toss-info-box">
-                    <div class="toss-info-label">투자원금</div>
-                    <div class="toss-info-value">{data['invest_krw']:,.0f}원</div>
-                </div>
-                """,
-                    unsafe_allow_html=True,
-                )
-
-            with g4:
-                st.markdown(
-                    f"""
-                <div class="toss-info-box">
-                    <div class="toss-info-label">평가금액</div>
-                    <div class="toss-info-value">{data['current_val_krw']:,.0f}원</div>
-                </div>
-                """,
-                    unsafe_allow_html=True,
-                )
-
-            st.markdown("</div>", unsafe_allow_html=True)  # 카드 컨테이너 종료
-
-            # 차트 기간 선택 및 그래프 렌더링
-            period_option = st.radio(
-                "차트 기간 선택",
-                ["1일", "1주", "1달", "3달"],
-                horizontal=True,
-                key=f"radio_{data['category']}_{data['ticker']}_{data['name']}",
-            )
-
-            period_map = {
-                "1일": ("1d", "5m"),
-                "1주": ("5d", "30m"),
-                "1달": ("1mo", "1d"),
-                "3달": ("3mo", "1d"),
-            }
-            p, i = period_map[period_option]
-
-            try:
-                t_obj = yf.Ticker(data["ticker"])
-                df = t_obj.history(period=p, interval=i)
-
-                if not df.empty:
-                    df["MA5"] = df["Close"].rolling(window=5).mean()
-                    df["MA10"] = df["Close"].rolling(window=10).mean()
-                    df["MA20"] = df["Close"].rolling(window=20).mean()
-                    df["MA60"] = df["Close"].rolling(window=60).mean()
-                    df["MA120"] = df["Close"].rolling(window=120).mean()
-
-                    fig = go.Figure()
-
-                    fig.add_trace(
-                        go.Scatter(
-                            x=df.index,
-                            y=df["Close"],
-                            mode="lines",
-                            name="종가",
-                            line=dict(color="#ffffff", width=1.5),
+                with cols[j]:
+                    with st.expander(
+                        f"📌 {data['name']} ({sign_str}{data['profit_rate']:.2f}%)"
+                    ):
+                        st.markdown(
+                            '<div class="toss-card-bg">', unsafe_allow_html=True
                         )
-                    )
-                    fig.add_trace(
-                        go.Scatter(
-                            x=df.index,
-                            y=df["MA5"],
-                            mode="lines",
-                            name="MA 5",
-                            line=dict(color="#f04452", width=1.2),
-                        )
-                    )
-                    fig.add_trace(
-                        go.Scatter(
-                            x=df.index,
-                            y=df["MA10"],
-                            mode="lines",
-                            name="MA 10",
-                            line=dict(color="#e5a93b", width=1.2),
-                        )
-                    )
-                    fig.add_trace(
-                        go.Scatter(
-                            x=df.index,
-                            y=df["MA20"],
-                            mode="lines",
-                            name="MA 20",
-                            line=dict(color="#3182f6", width=1.2),
-                        )
-                    )
-                    fig.add_trace(
-                        go.Scatter(
-                            x=df.index,
-                            y=df["MA60"],
-                            mode="lines",
-                            name="MA 60",
-                            line=dict(color="#9b5de5", width=1.2),
-                        )
-                    )
-                    fig.add_trace(
-                        go.Scatter(
-                            x=df.index,
-                            y=df["MA120"],
-                            mode="lines",
-                            name="MA 120",
-                            line=dict(color="#00b4d8", width=1.2),
-                        )
-                    )
 
-                    fig.update_layout(
-                        margin=dict(l=10, r=10, t=20, b=10),
-                        height=320,
-                        paper_bgcolor="#161b22",
-                        plot_bgcolor="#161b22",
-                        font=dict(color="#a0aab5"),
-                        legend=dict(
-                            orientation="h",
-                            yanchor="bottom",
-                            y=1.02,
-                            xanchor="right",
-                            x=1,
-                        ),
-                        xaxis=dict(showgrid=True, gridcolor="#2a323e"),
-                        yaxis=dict(showgrid=True, gridcolor="#2a323e"),
-                    )
+                        # 카드 상단 헤더 (종목명 & 현재가)
+                        h1, h2 = st.columns([1.1, 1])
+                        with h1:
+                            st.markdown(
+                                f'<div class="toss-badge">{data["category"]}</div>',
+                                unsafe_allow_html=True,
+                            )
+                            st.markdown(
+                                f'<div class="toss-title">{data["name"]}</div>',
+                                unsafe_allow_html=True,
+                            )
+                            st.markdown(
+                                f'<div class="toss-sub">일반 · {data["market_type"]}</div>',
+                                unsafe_allow_html=True,
+                            )
+                        with h2:
+                            st.markdown(
+                                '<div style="text-align: right;">'
+                                '<div style="color: #a0aab5; font-size: 0.75rem; margin-bottom: 2px;">현재가</div>'
+                                f'<div class="toss-current-price {profit_class}">{data["current_price_display"]}</div>'
+                                f'<div class="toss-profit-rate {profit_class}">{sign_str}{data["profit_rate"]:.2f}%</div>'
+                                "</div>",
+                                unsafe_allow_html=True,
+                            )
 
-                    st.plotly_chart(fig, use_container_width=True)
-                else:
-                    st.info(
-                        "선택한 기간의 차트 데이터를 불러올 수 없습니다."
-                    )
-            except Exception:
-                st.error("차트를 불러오는 중 오류가 발생했습니다.")
+                        st.markdown(
+                            "<div style='margin-top: 14px;'></div>",
+                            unsafe_allow_html=True,
+                        )
+
+                        # 하단 4개 정보 박스 그리드
+                        g1, g2, g3, g4 = st.columns(4)
+                        with g1:
+                            st.markdown(
+                                f'<div class="toss-info-box"><div class="toss-info-label">보유수량</div><div class="toss-info-value">{data["shares_display"]}</div></div>',
+                                unsafe_allow_html=True,
+                            )
+                        with g2:
+                            st.markdown(
+                                f'<div class="toss-info-box"><div class="toss-info-label">평균단가</div><div class="toss-info-value">{data["avg_price_display"]}</div></div>',
+                                unsafe_allow_html=True,
+                            )
+                        with g3:
+                            st.markdown(
+                                f'<div class="toss-info-box"><div class="toss-info-label">투자원금</div><div class="toss-info-value">{data["invest_krw"]:,.0f}원</div></div>',
+                                unsafe_allow_html=True,
+                            )
+                        with g4:
+                            st.markdown(
+                                f'<div class="toss-info-box"><div class="toss-info-label">평가금액</div><div class="toss-info-value">{data["current_val_krw"]:,.0f}원</div></div>',
+                                unsafe_allow_html=True,
+                            )
+
+                        st.markdown("</div>", unsafe_allow_html=True)
+
+                        # 차트 기간 선택 및 그래프
+                        period_option = st.radio(
+                            "차트 기간 선택",
+                            ["1일", "1주", "1달", "3달"],
+                            horizontal=True,
+                            key=f"radio_{data['category']}_{data['ticker']}_{data['name']}_{i}_{j}",
+                        )
+
+                        period_map = {
+                            "1일": ("1d", "5m"),
+                            "1주": ("5d", "30m"),
+                            "1달": ("1mo", "1d"),
+                            "3달": ("3mo", "1d"),
+                        }
+                        p, inter = period_map[period_option]
+
+                        try:
+                            t_obj = yf.Ticker(data["ticker"])
+                            df = t_obj.history(period=p, interval=inter)
+
+                            if not df.empty:
+                                df["MA5"] = (
+                                    df["Close"].rolling(window=5).mean()
+                                )
+                                df["MA10"] = (
+                                    df["Close"].rolling(window=10).mean()
+                                )
+                                df["MA20"] = (
+                                    df["Close"].rolling(window=20).mean()
+                                )
+                                df["MA60"] = (
+                                    df["Close"].rolling(window=60).mean()
+                                )
+                                df["MA120"] = (
+                                    df["Close"].rolling(window=120).mean()
+                                )
+
+                                fig = go.Figure()
+                                fig.add_trace(
+                                    go.Scatter(
+                                        x=df.index,
+                                        y=df["Close"],
+                                        mode="lines",
+                                        name="종가",
+                                        line=dict(color="#ffffff", width=1.5),
+                                    )
+                                )
+                                fig.add_trace(
+                                    go.Scatter(
+                                        x=df.index,
+                                        y=df["MA5"],
+                                        mode="lines",
+                                        name="MA 5",
+                                        line=dict(color="#f04452", width=1.2),
+                                    )
+                                )
+                                fig.add_trace(
+                                    go.Scatter(
+                                        x=df.index,
+                                        y=df["MA10"],
+                                        mode="lines",
+                                        name="MA 10",
+                                        line=dict(color="#e5a93b", width=1.2),
+                                    )
+                                )
+                                fig.add_trace(
+                                    go.Scatter(
+                                        x=df.index,
+                                        y=df["MA20"],
+                                        mode="lines",
+                                        name="MA 20",
+                                        line=dict(color="#3182f6", width=1.2),
+                                    )
+                                )
+                                fig.add_trace(
+                                    go.Scatter(
+                                        x=df.index,
+                                        y=df["MA60"],
+                                        mode="lines",
+                                        name="MA 60",
+                                        line=dict(color="#9b5de5", width=1.2),
+                                    )
+                                )
+                                fig.add_trace(
+                                    go.Scatter(
+                                        x=df.index,
+                                        y=df["MA120"],
+                                        mode="lines",
+                                        name="MA 120",
+                                        line=dict(color="#00b4d8", width=1.2),
+                                    )
+                                )
+
+                                fig.update_layout(
+                                    margin=dict(l=10, r=10, t=20, b=10),
+                                    height=300,
+                                    paper_bgcolor="#161b22",
+                                    plot_bgcolor="#161b22",
+                                    font=dict(color="#a0aab5"),
+                                    legend=dict(
+                                        orientation="h",
+                                        yanchor="bottom",
+                                        y=1.02,
+                                        xanchor="right",
+                                        x=1,
+                                    ),
+                                    xaxis=dict(showgrid=True, gridcolor="#2a323e"),
+                                    yaxis=dict(showgrid=True, gridcolor="#2a323e"),
+                                )
+
+                                st.plotly_chart(fig, use_container_width=True)
+                            else:
+                                st.info("차트 데이터가 없습니다.")
+                        except Exception:
+                            st.error("차트 로딩 중 오류 발생")
 
 
 with tab_all:
-    render_stock_cards(all_stock_data)
+    render_stock_grid(all_stock_data)
 
 with tab_toss:
     toss_data = [
@@ -609,7 +603,7 @@ with tab_toss:
         for d in all_stock_data
         if d["name"] in ["SK하이닉스", "SK스퀘어", "크리에이트 엔터프라이즈"]
     ]
-    render_stock_cards(toss_data)
+    render_stock_grid(toss_data)
 
 with tab_kakao:
     kakao_data = [
@@ -617,4 +611,4 @@ with tab_kakao:
         for d in all_stock_data
         if d["name"] not in ["SK하이닉스", "SK스퀘어", "크리에이트 엔터프라이즈"]
     ]
-    render_stock_cards(kakao_data)
+    render_stock_grid(kakao_data)
