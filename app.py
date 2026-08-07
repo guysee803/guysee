@@ -499,11 +499,11 @@ def render_stock_cards(data_list):
             )
 
             # 2. 기간 선택 라디오 버튼 (1일, 1주, 1달, 3달)
-            period_option = st.radio(
+           period_option = st.radio(
                 "차트 기간 선택",
                 ["1일", "1주", "1달", "3달"],
                 horizontal=True,
-                key=f"radio_{data['ticker']}_{data['name']}",
+                key=f"radio_{data['category']}_{data['ticker']}_{data['name']}",
             )
 
             period_map = {
