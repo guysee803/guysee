@@ -8,7 +8,7 @@ import yfinance as yf
 # 🌐 웹페이지 기본 설정
 # ---------------------------------------------------------
 st.set_page_config(
-    page_title="석의 주식창 V24 (투자 진단)",
+    page_title="석의 주식창 V25 (탭 메뉴 이동)",
     page_icon="📈",
     layout="wide",
 )
@@ -309,7 +309,7 @@ def calculate_stock(item, exchange_rate):
 
     # 기술적 지표 계산 (RSI 및 이동평균선)
     rsi = 50.0
-    ma5, ma20 = current_price, current_price
+    ma20 = current_price
     if not hist.empty and len(hist) > 14:
         delta = hist["Close"].diff()
         gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
@@ -319,7 +319,6 @@ def calculate_stock(item, exchange_rate):
         if not pd.isna(calculated_rsi.iloc[-1]):
             rsi = calculated_rsi.iloc[-1]
 
-        ma5 = hist["Close"].rolling(window=5).mean().iloc[-1]
         ma20 = hist["Close"].rolling(window=20).mean().iloc[-1]
 
     # 매수/매도 타이밍 및 진단 로직
@@ -421,32 +420,9 @@ total_profit_rate = (
 profit_class_total = "profit-pos" if total_profit >= 0 else "profit-neg"
 
 # ---------------------------------------------------------
-# 사이드바 메뉴 상태 관리
-# ---------------------------------------------------------
-menu_options = [
-    "📊 전체 보기",
-    "💳 토스증권",
-    "💬 카카오페이 일반",
-    "💬 카카오페이 RIA",
-    "💬 카카오페이 ISA",
-]
-
-if "selected_menu" not in st.session_state:
-    st.session_state.selected_menu = "📊 전체 보기"
-
-st.sidebar.title("📌 계좌 선택 메뉴")
-selected_view = st.sidebar.radio(
-    "조회할 계좌를 선택하세요",
-    menu_options,
-    index=menu_options.index(st.session_state.selected_menu),
-)
-
-st.session_state.selected_menu = selected_view
-
-# ---------------------------------------------------------
 # 메인 화면 렌더링
 # ---------------------------------------------------------
-st.title("석의 주식창 (투자 진단 V24)")
+st.title("석의 주식창")
 
 kst = timezone(timedelta(hours=9))
 utc = timezone.utc
@@ -457,7 +433,7 @@ st.markdown(
     f"""
 <div class='main-subtitle'>
     🇰🇷 <b>한국 시간 (KST):</b> {time_kst} &nbsp;&nbsp;|&nbsp;&nbsp; 🌍 <b>협정 세계시 (UTC):</b> {time_utc} <br>
-    <span style="color: #a0aab5; font-size: 0.9rem;">실시간 시세, RSI 과매수/과매도 분석 및 목표·손절가 자동 산정 적용 중</span>
+    <span style="color: #a0aab5; font-size: 0.9rem;">실시간 시세, RSI 분석 및 투자 진단 반영 중</span>
 </div>
 """,
     unsafe_allow_html=True,
@@ -532,23 +508,13 @@ for idx, acc_name in enumerate(account_categories):
                 unsafe_allow_html=True,
             )
 
-            st.markdown(
-                "<div style='margin-top: 8px;'></div>", unsafe_allow_html=True
-            )
-            target_menu_name = (
-                f"💳 {acc_name}" if "토스" in acc_name else f"💬 {acc_name}"
-            )
-            if st.button("해당 종목 보기", key=f"btn_move_{idx}"):
-                st.session_state.selected_menu = target_menu_name
-                st.rerun()
-
 st.markdown(
     "<hr style='margin-top: 25px; margin-bottom: 25px; border-color: #30363d;'>",
     unsafe_allow_html=True,
 )
 
 
-# 3. 선택된 메뉴에 따른 종목 그리드 렌더링 함수 (투자 진단 반영)
+# 3. 종목 그리드 렌더링 함수
 def render_stock_grid(data_list, tab_prefix):
     if not data_list:
         st.info("해당 계좌에 등록된 종목이 없습니다.")
@@ -618,7 +584,7 @@ def render_stock_grid(data_list, tab_prefix):
                                 unsafe_allow_html=True,
                             )
 
-                        # 🛠️ 투자 진단 (대응전략, RSI, 목표가/손절가) 박스 추가
+                        # 투자 진단 박스
                         st.markdown(
                             f"""
                         <div class="strategy-box">
@@ -764,28 +730,39 @@ def render_stock_grid(data_list, tab_prefix):
                                 st.error("차트 로딩 중 오류 발생")
 
 
-if st.session_state.selected_menu == "📊 전체 보기":
-    st.subheader("📊 전체 종목 리스트")
+# 4. 계좌별 자산 카드 아래에 배치된 메인 탭 메뉴
+st.markdown("### 🗂️ 계좌별 종목 보기")
+tab_all, tab_toss, tab_gen, tab_ria, tab_isa = st.tabs(
+    [
+        "📊 전체 보기",
+        "💳 토스증권",
+        "💬 카카오페이 일반",
+        "💬 카카오페이 RIA",
+        "💬 카카오페이 ISA",
+    ]
+)
+
+with tab_all:
     render_stock_grid(all_stock_data, "all")
-elif st.session_state.selected_menu == "💳 토스증권":
-    st.subheader("💳 토스증권 종목 리스트")
+
+with tab_toss:
     render_stock_grid(
         [d for d in all_stock_data if d["category"] == "토스증권"], "toss"
     )
-elif st.session_state.selected_menu == "💬 카카오페이 일반":
-    st.subheader("💬 카카오페이 일반 종목 리스트")
+
+with tab_gen:
     render_stock_grid(
         [d for d in all_stock_data if d["category"] == "카카오페이 일반"],
         "kk_gen",
     )
-elif st.session_state.selected_menu == "💬 카카오페이 RIA":
-    st.subheader("💬 카카오페이 RIA 종목 리스트")
+
+with tab_ria:
     render_stock_grid(
         [d for d in all_stock_data if d["category"] == "카카오페이 RIA"],
         "kk_ria",
     )
-elif st.session_state.selected_menu == "💬 카카오페이 ISA":
-    st.subheader("💬 카카오페이 ISA 종목 리스트")
+
+with tab_isa:
     render_stock_grid(
         [d for d in all_stock_data if d["category"] == "카카오페이 ISA"],
         "kk_isa",
