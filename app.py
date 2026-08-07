@@ -1,5 +1,6 @@
 from datetime import datetime, timezone, timedelta
 import pandas as pd
+import plotly.graph_objects as go
 import streamlit as st
 import yfinance as yf
 
@@ -7,13 +8,13 @@ import yfinance as yf
 # 🌐 웹페이지 기본 설정
 # ---------------------------------------------------------
 st.set_page_config(
-    page_title="석의 주식창 V4 - 계좌별 보기 & 상세정보",
+    page_title="석의 주식창 V7 - 다중 이동평균선 추가",
     page_icon="📈",
     layout="wide",
 )
 
 # ---------------------------------------------------------
-# 🎨 고급 CSS 스타일링 (다크 모드 디자인)
+# 🎨 고급 CSS 스타일링 (토스앱 스타일 카드 디자인)
 # ---------------------------------------------------------
 st.markdown(
     """
@@ -46,7 +47,7 @@ st.markdown(
     .kpi-card {
         flex: 1;
         background-color: #161b22;
-        border-radius: 12px;
+        border-radius: 16px;
         padding: 20px;
         box-shadow: 0 4px 8px rgba(0,0,0,0.3);
         border: 1px solid #2a323e;
@@ -70,87 +71,96 @@ st.markdown(
         margin-top: 4px;
     }
 
-    .stock-card {
+    /* 토스 스타일 주식 카드 */
+    .toss-card {
         background-color: #161b22;
-        border-radius: 12px;
-        padding: 20px;
-        margin-bottom: 15px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        border-radius: 20px;
+        padding: 24px;
+        margin-bottom: 16px;
+        box-shadow: 0 6px 12px rgba(0,0,0,0.25);
         border: 1px solid #2a323e;
     }
     
-    .card-top {
+    .toss-header {
         display: flex;
         justify-content: space-between;
-        align-items: start;
-        margin-bottom: 15px;
+        align-items: flex-start;
+        margin-bottom: 20px;
     }
 
-    .stock-name-area {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
-    
-    .company-logo {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        background-color: #2a323e;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.1rem;
-        color: #ffffff;
-        font-weight: 600;
-    }
-
-    .company-name {
-        font-size: 1.15rem;
-        font-weight: 600;
-        line-height: 1.2;
-    }
-
-    .company-meta {
-        color: #a0aab5;
-        font-size: 0.8rem;
-        font-weight: 300;
-    }
-
-    .card-price-area {
-        text-align: right;
-    }
-
-    .current-price {
-        font-size: 1.3rem;
+    .toss-badge {
+        display: inline-block;
+        background-color: #e5a93b;
+        color: #1c1c1c;
+        font-size: 0.75rem;
         font-weight: 700;
+        padding: 4px 10px;
+        border-radius: 20px;
+        margin-bottom: 8px;
     }
 
-    .profit-pos {
-        color: #ef476f !important;
-    }
-    .profit-neg {
-        color: #118ab2 !important;
-    }
-
-    .card-bottom-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 15px;
-        border-top: 1px solid #2a323e;
-        padding-top: 15px;
-    }
-    
-    .info-label {
-        color: #a0aab5;
-        font-size: 0.72rem;
-        text-transform: uppercase;
+    .toss-title {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #ffffff;
         margin-bottom: 4px;
     }
 
-    .info-value {
-        font-size: 1rem;
+    .toss-sub {
+        color: #a0aab5;
+        font-size: 0.85rem;
+    }
+
+    .toss-price-area {
+        text-align: right;
+    }
+
+    .toss-price-label {
+        color: #a0aab5;
+        font-size: 0.8rem;
+        margin-bottom: 2px;
+    }
+
+    .toss-current-price {
+        font-size: 1.6rem;
+        font-weight: 700;
+    }
+
+    .toss-profit-rate {
+        font-size: 0.95rem;
         font-weight: 600;
+        margin-top: 2px;
+    }
+
+    .profit-pos {
+        color: #f04452 !important;
+    }
+    .profit-neg {
+        color: #3182f6 !important;
+    }
+
+    /* 하단 4개 정보 박스 그리드 */
+    .toss-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+    }
+
+    .toss-info-box {
+        background-color: #1f2630;
+        border-radius: 14px;
+        padding: 14px 16px;
+    }
+
+    .toss-info-label {
+        color: #a0aab5;
+        font-size: 0.8rem;
+        margin-bottom: 6px;
+    }
+
+    .toss-info-value {
+        font-size: 1.05rem;
+        font-weight: 700;
         color: #ffffff;
     }
     
@@ -173,7 +183,6 @@ portfolio_data = [
         "shares": 2,
         "avg_price": 2545000,
         "currency": "KRW",
-        "logo": "S",
     },
     {
         "category": "토스",
@@ -182,7 +191,6 @@ portfolio_data = [
         "shares": 2,
         "avg_price": 1990000,
         "currency": "KRW",
-        "logo": "S",
     },
     {
         "category": "카카오페이",
@@ -191,7 +199,6 @@ portfolio_data = [
         "shares": 20,
         "avg_price": 126052,
         "currency": "KRW",
-        "logo": "삼",
     },
     {
         "category": "카카오페이",
@@ -200,7 +207,6 @@ portfolio_data = [
         "shares": 10,
         "avg_price": 82950,
         "currency": "KRW",
-        "logo": "두",
     },
     {
         "category": "카카오페이",
@@ -209,7 +215,6 @@ portfolio_data = [
         "shares": 10,
         "avg_price": 32015,
         "currency": "KRW",
-        "logo": "우",
     },
     {
         "category": "카카오페이",
@@ -218,7 +223,6 @@ portfolio_data = [
         "shares": 1,
         "avg_price": 100995,
         "currency": "KRW",
-        "logo": "T",
     },
     {
         "category": "카카오페이",
@@ -227,7 +231,6 @@ portfolio_data = [
         "shares": 1,
         "avg_price": 101155,
         "currency": "KRW",
-        "logo": "K",
     },
     {
         "category": "카카오페이",
@@ -236,7 +239,6 @@ portfolio_data = [
         "shares": 1,
         "avg_price": 20100,
         "currency": "KRW",
-        "logo": "K",
     },
     {
         "category": "카카오페이",
@@ -245,7 +247,6 @@ portfolio_data = [
         "shares": 2.748,
         "avg_price": 192.28,
         "currency": "USD",
-        "logo": "N",
     },
     {
         "category": "카카오페이",
@@ -254,7 +255,6 @@ portfolio_data = [
         "shares": 4.23,
         "avg_price": 29.06,
         "currency": "USD",
-        "logo": "N",
     },
     {
         "category": "카카오페이",
@@ -263,7 +263,6 @@ portfolio_data = [
         "shares": 1,
         "avg_price": 182.23,
         "currency": "USD",
-        "logo": "N",
     },
     {
         "category": "카카오페이(ISA)",
@@ -272,7 +271,6 @@ portfolio_data = [
         "shares": 13,
         "avg_price": 13506,
         "currency": "KRW",
-        "logo": "T",
     },
     {
         "category": "카카오페이",
@@ -281,7 +279,6 @@ portfolio_data = [
         "shares": 5,
         "avg_price": 26627,
         "currency": "KRW",
-        "logo": "P",
     },
     {
         "category": "토스",
@@ -290,7 +287,6 @@ portfolio_data = [
         "shares": 15,
         "avg_price": 4.48,
         "currency": "USD",
-        "logo": "C",
     },
 ]
 
@@ -320,43 +316,36 @@ def calculate_stock(item, exchange_rate):
                 current_price = hist["Close"].iloc[-1]
             else:
                 current_price = item["avg_price"]
-
-        hist = ticker.history(period="1d")
-        if not hist.empty:
-            high_price = hist["High"].iloc[-1]
-            low_price = hist["Low"].iloc[-1]
-        else:
-            high_price = current_price
-            low_price = current_price
     except:
         current_price = item["avg_price"]
-        high_price = item["avg_price"]
-        low_price = item["avg_price"]
 
     if item["currency"] == "USD":
         invest_krw = item["avg_price"] * item["shares"] * exchange_rate
         current_val_krw = current_price * item["shares"] * exchange_rate
         current_price_display = f"${current_price:,.2f}"
-        high_low_display = f"${low_price:,.2f} ~ ${high_price:,.2f}"
+        avg_price_display = f"${item['avg_price']:,.2f}"
     else:
         invest_krw = item["avg_price"] * item["shares"]
         current_val_krw = current_price * item["shares"]
         current_price_display = f"{current_price:,.0f}원"
-        high_low_display = f"{low_price:,.0f} ~ {high_price:,.0f}원"
+        avg_price_display = f"{item['avg_price']:,.0f}원"
 
     profit_krw = current_val_krw - invest_krw
     profit_rate = (profit_krw / invest_krw * 100) if invest_krw != 0 else 0
+
+    if item["shares"] == int(item["shares"]):
+        shares_display = f"{int(item['shares'])}주"
+    else:
+        shares_display = f"{item['shares']:.3f}주"
 
     return {
         "category": item["category"],
         "name": item["name"],
         "ticker": item["ticker"],
-        "shares": item["shares"],
-        "avg_price": item["avg_price"],
+        "shares_display": shares_display,
+        "avg_price_display": avg_price_display,
         "currency": item["currency"],
-        "logo_char": item["logo"],
         "current_price_display": current_price_display,
-        "high_low_display": high_low_display,
         "invest_krw": invest_krw,
         "current_val_krw": current_val_krw,
         "profit_krw": profit_krw,
@@ -379,7 +368,7 @@ st.markdown(
     f"""
 <div class='main-subtitle'>
     🇰🇷 <b>한국 시간 (KST):</b> {time_kst} &nbsp;&nbsp;|&nbsp;&nbsp; 🌍 <b>협정 세계시 (UTC):</b> {time_utc} <br>
-    <span style="color: #a0aab5; font-size: 0.9rem;">실시간 시세 및 애프터마켓 반영 중</span>
+    <span style="color: #a0aab5; font-size: 0.9rem;">실시간 시세 및 5/10/20/60/120일 이동평균선 반영 중</span>
 </div>
 """,
     unsafe_allow_html=True,
@@ -435,52 +424,43 @@ tab_all, tab_toss, tab_kakao = st.tabs(
 def render_stock_cards(data_list):
     for data in data_list:
         profit_class = "profit-pos" if data["profit_rate"] >= 0 else "profit-neg"
-        avg_price_display = (
-            f"${data['avg_price']:,.2f}"
-            if data["currency"] == "USD"
-            else f"{data['avg_price']:,.0f}원"
-        )
-
-        if data["shares"] == int(data["shares"]):
-            shares_display = f"{int(data['shares'])}주"
-        else:
-            shares_display = f"{data['shares']:.3f}주"
+        sign_str = "+" if data["profit_rate"] >= 0 else ""
 
         with st.expander(
-            f"📌 {data['name']} ({data['ticker']}) - 현재가: {data['current_price_display']} ({data['profit_rate']:+.2f}%)"
+            f"📌 {data['name']} - 현재가: {data['current_price_display']} ({sign_str}{data['profit_rate']:.2f}%)"
         ):
             st.markdown(
                 f"""
-            <div class="stock-card" style="margin-bottom: 15px;">
-                <div class="card-top">
-                    <div class="stock-name-area">
-                        <div class="company-logo">{data['logo_char']}</div>
-                        <div>
-                            <div class="company-name">{data['name']}</div>
-                            <div class="company-meta">{data['category']} · {data['ticker']}</div>
-                        </div>
+            <div class="toss-card">
+                <div class="toss-header">
+                    <div>
+                        <div class="toss-badge">{data['category']}</div>
+                        <div class="toss-title">{data['name']}</div>
+                        <div class="toss-sub">일반 · {data['ticker']}</div>
                     </div>
-                    <div class="card-price-area">
-                        <div class="current-price {profit_class}">{data['current_price_display']}</div>
-                        <div class="company-meta {profit_class}">{data['profit_rate']:.2f}%</div>
+                    <div class="toss-price-area">
+                        <div class="toss-price-label">현재가</div>
+                        <div class="toss-current-price {profit_class}">{data['current_price_display']}</div>
+                        <div class="toss-profit-rate {profit_class}">{sign_str}{data['profit_rate']:.2f}%</div>
                     </div>
                 </div>
-                <div class="card-bottom-grid">
-                    <div>
-                        <div class="info-label">보유수량 / 평단</div>
-                        <div class="info-value">{shares_display} / {avg_price_display}</div>
+                
+                <div class="toss-grid">
+                    <div class="toss-info-box">
+                        <div class="toss-info-label">보유수량</div>
+                        <div class="toss-info-value">{data['shares_display']}</div>
                     </div>
-                    <div>
-                        <div class="info-label">당일 최저 ~ 최고가</div>
-                        <div class="info-value" style="font-size: 0.9rem;">{data['high_low_display']}</div>
+                    <div class="toss-info-box">
+                        <div class="toss-info-label">평균단가</div>
+                        <div class="toss-info-value">{data['avg_price_display']}</div>
                     </div>
-                    <div>
-                        <div class="info-label">평가손익</div>
-                        <div class="info-value {profit_class}">{data['profit_krw']:,.0f}원</div>
+                    <div class="toss-info-box">
+                        <div class="toss-info-label">투자원금</div>
+                        <div class="toss-info-value">{data['invest_krw']:,.0f}원</div>
                     </div>
-                    <div>
-                        <div class="info-label">평가금액</div>
-                        <div class="info-value">{data['current_val_krw']:,.0f}원</div>
+                    <div class="toss-info-box">
+                        <div class="toss-info-label">평가금액</div>
+                        <div class="toss-info-value">{data['current_val_krw']:,.0f}원</div>
                     </div>
                 </div>
             </div>
@@ -508,7 +488,101 @@ def render_stock_cards(data_list):
                 df = t_obj.history(period=p, interval=i)
 
                 if not df.empty:
-                    st.line_chart(df["Close"])
+                    # 5일, 10일, 20일, 60일, 120일 이동평균선 계산
+                    df["MA5"] = df["Close"].rolling(window=5).mean()
+                    df["MA10"] = df["Close"].rolling(window=10).mean()
+                    df["MA20"] = df["Close"].rolling(window=20).mean()
+                    df["MA60"] = df["Close"].rolling(window=60).mean()
+                    df["MA120"] = df["Close"].rolling(window=120).mean()
+
+                    # Plotly 차트 생성
+                    fig = go.Figure()
+
+                    # 종가 라인
+                    fig.add_trace(
+                        go.Scatter(
+                            x=df.index,
+                            y=df["Close"],
+                            mode="lines",
+                            name="종가",
+                            line=dict(color="#ffffff", width=1.5),
+                        )
+                    )
+
+                    # 5일선
+                    fig.add_trace(
+                        go.Scatter(
+                            x=df.index,
+                            y=df["MA5"],
+                            mode="lines",
+                            name="MA 5",
+                            line=dict(color="#f04452", width=1.2),
+                        )
+                    )
+
+                    # 10일선
+                    fig.add_trace(
+                        go.Scatter(
+                            x=df.index,
+                            y=df["MA10"],
+                            mode="lines",
+                            name="MA 10",
+                            line=dict(color="#e5a93b", width=1.2),
+                        )
+                    )
+
+                    # 20일선
+                    fig.add_trace(
+                        go.Scatter(
+                            x=df.index,
+                            y=df["MA20"],
+                            mode="lines",
+                            name="MA 20",
+                            line=dict(color="#3182f6", width=1.2),
+                        )
+                    )
+
+                    # 60일선
+                    fig.add_trace(
+                        go.Scatter(
+                            x=df.index,
+                            y=df["MA60"],
+                            mode="lines",
+                            name="MA 60",
+                            line=dict(color="#9b5de5", width=1.2),
+                        )
+                    )
+
+                    # 120일선
+                    fig.add_trace(
+                        go.Scatter(
+                            x=df.index,
+                            y=df["MA120"],
+                            mode="lines",
+                            name="MA 120",
+                            line=dict(color="#00b4d8", width=1.2),
+                        )
+                    )
+
+                    # 차트 레이아웃 디자인 설정 (다크모드 맞춤)
+                    fig.update_layout(
+                        margin=dict(l=10, r=10, t=20, b=10),
+                        height=320,
+                        paper_bgcolor="#161b22",
+                        plot_bgcolor="#161b22",
+                        font=dict(color="#a0aab5"),
+                        legend=dict(
+                            orientation="h",
+                            yanchor="bottom",
+                            y=1.02,
+                            xanchor="right",
+                            x=1,
+                        ),
+                        xaxis=dict(showgrid=True, gridcolor="#2a323e"),
+                        yaxis=dict(showgrid=True, gridcolor="#2a323e"),
+                    )
+
+                    st.plotly_chart(fig, use_container_width=True)
                 else:
                     st.info(
                         "선택한 기간의 차트 데이터를 불러올 수 없습니다."
