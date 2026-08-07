@@ -10,6 +10,52 @@ st.set_page_config(
 st.title("📈 내 주식 포트폴리오 실시간 대시보드")
 st.markdown("매일 자동으로 업데이트되는 보유 종목 시세와 평가 손익을 확인하세요.")
 
+import pandas as pd
+import streamlit as st
+import yfinance as yf
+from datetime import datetime, timedelta
+
+# 웹페이지 기본 설정
+st.set_page_config(page_title="나만의 맞춤형 주식 대시보드", page_icon="📈", layout="wide")
+
+st.title("📈 내 주식 포트폴리오 실시간 대시보드")
+
+# 1. 정기 적립 투자 로직 (2026-03-02 월요일부터 시작 가정)
+start_date = datetime(2026, 3, 2)
+today = datetime.now()
+mondays_passed = len(pd.date_range(start=start_date, end=today, freq='W-MON'))
+
+# 정기 적립 투자 데이터
+recurring_investments = {
+    "엔비디아(원)": 25000 * mondays_passed,
+    "TIGER커버드콜(주)": 1 * mondays_passed
+}
+
+# 기존 보유 종목 데이터
+portfolio_data = [
+    {"category": "해외주식", "name": "크리에이트 엔터프라이즈", "ticker": "CRE8", "shares": 15, "avg_price": 4.48, "currency": "USD"},
+    {"category": "국내주식", "name": "SK스퀘어", "ticker": "402340.KS", "shares": 2, "avg_price": 1990000, "currency": "KRW"},
+    {"category": "국내주식", "name": "삼성전자", "ticker": "005930.KS", "shares": 20, "avg_price": 126052, "currency": "KRW"},
+    # ... (기타 종목들 동일하게 유지)
+]
+
+# 원/달러 환율 가져오기
+@st.cache_data(ttl=3600)
+def get_exchange_rate():
+    try: return yf.Ticker("USDCKR=X").history(period="1d")["Close"].iloc[-1]
+    except: return 1350.0
+
+usd_krw = get_exchange_rate()
+
+# 적립 투자 정보 표시
+st.subheader("🗓️ 정기 적립 투자 현황")
+st.write(f"시작일로부터 **{mondays_passed}주** 동안 적립 투자 중입니다.")
+st.info(f"현재까지 적립 원금: 엔비디아 {recurring_investments['엔비디아(원)']:,}원 / TIGER커버드콜 {recurring_investments['TIGER커버드콜(주)']}주")
+
+st.markdown("---")
+
+# 기존 시세 계산 및 출력 로직은 이전과 동일하게 유지하시면 됩니다.
+# (전체 코드가 너무 길어지면 위 로직을 기존 코드 상단에 추가해 주세요)
 # 보유 종목 리스트 (종목명, 티커, 수량, 매수가, 통화)
 portfolio_data = [
     {
