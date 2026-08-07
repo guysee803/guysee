@@ -8,7 +8,7 @@ import yfinance as yf
 # 🌐 웹페이지 기본 설정
 # ---------------------------------------------------------
 st.set_page_config(
-    page_title="석의 주식창 V23",
+    page_title="석의 주식창 V24 (투자 진단)",
     page_icon="📈",
     layout="wide",
 )
@@ -130,6 +130,15 @@ st.markdown(
         font-weight: 700;
         color: #ffffff;
     }
+
+    .strategy-box {
+        background-color: #161b22;
+        border: 1px solid #30363d;
+        border-radius: 10px;
+        padding: 12px 15px;
+        margin-top: 10px;
+        font-size: 0.85rem;
+    }
     
     div[data-testid="stDataFrame"], div[data-testid="stTable"], header {
         display: none;
@@ -140,7 +149,7 @@ st.markdown(
 )
 
 # ---------------------------------------------------------
-# 📂 전체 종목 데이터 정의 (요청사항 반영 완료)
+# 📂 전체 종목 데이터 정의
 # ---------------------------------------------------------
 portfolio_data = [
     # 토스증권 (3종목)
@@ -277,31 +286,89 @@ current_usd_krw = get_exchange_rate()
 
 def calculate_stock(item, exchange_rate):
     ticker = yf.Ticker(item["ticker"])
+    current_price = None
+    hist = pd.DataFrame()
+
     try:
         fi = ticker.fast_info
         current_price = getattr(fi, "last_price", None)
 
-        if not current_price:
-            hist = ticker.history(period="1d")
-            if not hist.empty:
-                current_price = hist["Close"].iloc[-1]
-            else:
-                current_price = item["avg_price"]
+        hist = ticker.history(period="3mo", interval="1d")
+        if (
+            not hist.empty
+            and (current_price is None or pd.isna(current_price))
+        ):
+            current_price = hist["Close"].iloc[-1]
     except:
+        pass
+
+    if current_price is None or pd.isna(current_price):
         current_price = item["avg_price"]
 
-    market_type = "해외" if item["currency"] == "USD" else "국내"
+    market_type = "해외" if item["currency"] == "USD" else "KRW"
+
+    # 기술적 지표 계산 (RSI 및 이동평균선)
+    rsi = 50.0
+    ma5, ma20 = current_price, current_price
+    if not hist.empty and len(hist) > 14:
+        delta = hist["Close"].diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
+        rs = gain / loss
+        calculated_rsi = 100 - (100 / (1 + rs))
+        if not pd.isna(calculated_rsi.iloc[-1]):
+            rsi = calculated_rsi.iloc[-1]
+
+        ma5 = hist["Close"].rolling(window=5).mean().iloc[-1]
+        ma20 = hist["Close"].rolling(window=20).mean().iloc[-1]
+
+    # 매수/매도 타이밍 및 진단 로직
+    signal_text = "중립 (관망)"
+    signal_color = "#e5a93b"
+    strategy_desc = ""
+
+    if rsi >= 70:
+        signal_text = "🔥 과매수 구간 (이익 실현 검토)"
+        signal_color = "#f04452"
+        strategy_desc = "단기 상승 과열 구간입니다. 분할 매도나 비중 축소를 고려하세요."
+    elif rsi <= 30:
+        signal_text = "❄️ 과매도 구간 (분할 매수 기회)"
+        signal_color = "#3182f6"
+        strategy_desc = (
+            "주가가 과도하게 하락한 구간입니다. 분할 매수 접근이 유리합니다."
+        )
+    else:
+        if current_price > ma20:
+            signal_text = "📈 상승 추세 (보유 및 홀딩)"
+            signal_color = "#f04452"
+            strategy_desc = (
+                "20일 이동평균선 위에 위치하여 추세가 양호합니다. 홀딩을 권장합니다."
+            )
+        else:
+            signal_text = "📉 하락 추세 (방어적 대응)"
+            signal_color = "#3182f6"
+            strategy_desc = (
+                "20일 이동평균선 아래에 위치합니다. 리스크 관리에 유의하세요."
+            )
+
+    # 목표가 (+15%), 손절가 (-8%) 자동 산정
+    target_price = item["avg_price"] * 1.15
+    stop_loss_price = item["avg_price"] * 0.92
 
     if item["currency"] == "USD":
         invest_krw = item["avg_price"] * item["shares"] * exchange_rate
         current_val_krw = current_price * item["shares"] * exchange_rate
         current_price_display = f"${current_price:,.2f}"
         avg_price_display = f"${item['avg_price']:,.2f}"
+        target_display = f"${target_price:,.2f}"
+        stop_display = f"${stop_loss_price:,.2f}"
     else:
         invest_krw = item["avg_price"] * item["shares"]
         current_val_krw = current_price * item["shares"]
         current_price_display = f"{current_price:,.0f}원"
         avg_price_display = f"{item['avg_price']:,.0f}원"
+        target_display = f"{target_price:,.0f}원"
+        stop_display = f"{stop_loss_price:,.0f}원"
 
     profit_krw = current_val_krw - invest_krw
     profit_rate = (profit_krw / invest_krw * 100) if invest_krw != 0 else 0
@@ -324,6 +391,12 @@ def calculate_stock(item, exchange_rate):
         "current_val_krw": current_val_krw,
         "profit_krw": profit_krw,
         "profit_rate": profit_rate,
+        "rsi": rsi,
+        "signal_text": signal_text,
+        "signal_color": signal_color,
+        "strategy_desc": strategy_desc,
+        "target_display": target_display,
+        "stop_display": stop_display,
     }
 
 
@@ -334,7 +407,7 @@ all_stock_data = []
 total_invest = 0
 total_current_val = 0
 
-with st.spinner("실시간 시세 데이터를 불러오는 중입니다..."):
+with st.spinner("실시간 시세 및 기술적 지표 분석 중입니다..."):
     for item in portfolio_data:
         data = calculate_stock(item, current_usd_krw)
         all_stock_data.append(data)
@@ -373,7 +446,7 @@ st.session_state.selected_menu = selected_view
 # ---------------------------------------------------------
 # 메인 화면 렌더링
 # ---------------------------------------------------------
-st.title("석의 주식창")
+st.title("석의 주식창 (투자 진단 V24)")
 
 kst = timezone(timedelta(hours=9))
 utc = timezone.utc
@@ -384,7 +457,7 @@ st.markdown(
     f"""
 <div class='main-subtitle'>
     🇰🇷 <b>한국 시간 (KST):</b> {time_kst} &nbsp;&nbsp;|&nbsp;&nbsp; 🌍 <b>협정 세계시 (UTC):</b> {time_utc} <br>
-    <span style="color: #a0aab5; font-size: 0.9rem;">실시간 시세 및 이동평균선 반영 중</span>
+    <span style="color: #a0aab5; font-size: 0.9rem;">실시간 시세, RSI 과매수/과매도 분석 및 목표·손절가 자동 산정 적용 중</span>
 </div>
 """,
     unsafe_allow_html=True,
@@ -475,7 +548,7 @@ st.markdown(
 )
 
 
-# 3. 선택된 메뉴에 따른 종목 그리드 렌더링 함수
+# 3. 선택된 메뉴에 따른 종목 그리드 렌더링 함수 (투자 진단 반영)
 def render_stock_grid(data_list, tab_prefix):
     if not data_list:
         st.info("해당 계좌에 등록된 종목이 없습니다.")
@@ -544,6 +617,24 @@ def render_stock_grid(data_list, tab_prefix):
                                 f'<div class="toss-info-box"><div class="toss-info-label">평가금액</div><div class="toss-info-value">{data["current_val_krw"]:,.0f}원</div></div>',
                                 unsafe_allow_html=True,
                             )
+
+                        # 🛠️ 투자 진단 (대응전략, RSI, 목표가/손절가) 박스 추가
+                        st.markdown(
+                            f"""
+                        <div class="strategy-box">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                                <span style="font-weight: 700; color: {data['signal_color']};">{data['signal_text']}</span>
+                                <span style="color: #a0aab5; font-size: 0.8rem;">RSI: {data['rsi']:.1f}</span>
+                            </div>
+                            <div style="color: #c9d1d9; margin-bottom: 8px; font-size: 0.8rem;">💡 {data['strategy_desc']}</div>
+                            <div style="display: flex; justify-content: space-between; border-top: 1px solid #30363d; padding-top: 6px; color: #a0aab5; font-size: 0.78rem;">
+                                <span>🎯 <b>목표가:</b> <span style="color: #f04452;">{data['target_display']}</span></span>
+                                <span>🛑 <b>손절가:</b> <span style="color: #3182f6;">{data['stop_display']}</span></span>
+                            </div>
+                        </div>
+                        """,
+                            unsafe_allow_html=True,
+                        )
 
                         st.markdown(
                             "<div style='margin-top: 10px;'></div>",
