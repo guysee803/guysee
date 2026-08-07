@@ -8,13 +8,13 @@ import yfinance as yf
 # 🌐 웹페이지 기본 설정
 # ---------------------------------------------------------
 st.set_page_config(
-    page_title="석의 주식창 V10 - HTML 렌더링 안정화",
+    page_title="석의 주식창 V12 - 네이티브 컴포넌트 안정 버전",
     page_icon="📈",
     layout="wide",
 )
 
 # ---------------------------------------------------------
-# 🎨 고급 CSS 스타일링 (토스앱 스타일 카드 디자인)
+# 🎨 고급 CSS 스타일링 (토스앱 스타일 커스텀)
 # ---------------------------------------------------------
 st.markdown(
     """
@@ -71,21 +71,14 @@ st.markdown(
         margin-top: 4px;
     }
 
-    /* 토스 스타일 주식 카드 */
-    .toss-card {
+    /* 토스 스타일 주식 카드 컨테이너 배경 */
+    .toss-card-bg {
         background-color: #161b22;
         border-radius: 20px;
         padding: 24px;
         margin-bottom: 16px;
         box-shadow: 0 6px 12px rgba(0,0,0,0.25);
         border: 1px solid #2a323e;
-    }
-    
-    .toss-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 20px;
     }
 
     .toss-badge {
@@ -111,16 +104,6 @@ st.markdown(
         font-size: 0.85rem;
     }
 
-    .toss-price-area {
-        text-align: right;
-    }
-
-    .toss-price-label {
-        color: #a0aab5;
-        font-size: 0.8rem;
-        margin-bottom: 2px;
-    }
-
     .toss-current-price {
         font-size: 1.6rem;
         font-weight: 700;
@@ -139,13 +122,7 @@ st.markdown(
         color: #3182f6 !important;
     }
 
-    /* 하단 4개 정보 박스 그리드 */
-    .toss-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 12px;
-    }
-
+    /* 하단 4개 정보 박스 디자인 */
     .toss-info-box {
         background-color: #1f2630;
         border-radius: 14px;
@@ -432,43 +409,88 @@ def render_stock_cards(data_list):
         with st.expander(
             f"📌 {data['name']} - 현재가: {data['current_price_display']} ({sign_str}{data['profit_rate']:.2f}%)"
         ):
-            card_html = f"""
-            <div class="toss-card">
-                <div class="toss-header">
-                    <div>
-                        <div class="toss-badge">{data['category']}</div>
-                        <div class="toss-title">{data['name']}</div>
-                        <div class="toss-sub">일반 · {data['market_type']}</div>
-                    </div>
-                    <div class="toss-price-area">
-                        <div class="toss-price-label">현재가</div>
-                        <div class="toss-current-price {profit_class}">{data['current_price_display']}</div>
-                        <div class="toss-profit-rate {profit_class}">{sign_str}{data['profit_rate']:.2f}%</div>
-                    </div>
-                </div>
-                
-                <div class="toss-grid">
-                    <div class="toss-info-box">
-                        <div class="toss-info-label">보유수량</div>
-                        <div class="toss-info-value">{data['shares_display']}</div>
-                    </div>
-                    <div class="toss-info-box">
-                        <div class="toss-info-label">평균단가</div>
-                        <div class="toss-info-value">{data['avg_price_display']}</div>
-                    </div>
-                    <div class="toss-info-box">
-                        <div class="toss-info-label">투자원금</div>
-                        <div class="toss-info-value">{data['invest_krw']:,.0f}원</div>
-                    </div>
-                    <div class="toss-info-box">
-                        <div class="toss-info-label">평가금액</div>
-                        <div class="toss-info-value">{data['current_val_krw']:,.0f}원</div>
-                    </div>
-                </div>
-            </div>
-            """
-            st.markdown(card_html, unsafe_allow_html=True)
+            # 토스 스타일 카드 외부 컨테이너 시작
+            st.markdown('<div class="toss-card-bg">', unsafe_allow_html=True)
 
+            # 상단 헤더 영역 (종목명 & 현재가 배치)
+            col_left, col_right = st.columns([1.2, 1])
+
+            with col_left:
+                st.markdown(
+                    f'<div class="toss-badge">{data["category"]}</div>',
+                    unsafe_allow_html=True,
+                )
+                st.markdown(
+                    f'<div class="toss-title">{data["name"]}</div>',
+                    unsafe_allow_html=True,
+                )
+                st.markdown(
+                    f'<div class="toss-sub">일반 · {data["market_type"]}</div>',
+                    unsafe_allow_html=True,
+                )
+
+            with col_right:
+                st.markdown(
+                    '<div style="text-align: right;">'
+                    '<div style="color: #a0aab5; font-size: 0.8rem; margin-bottom: 2px;">현재가</div>'
+                    f'<div class="toss-current-price {profit_class}">{data["current_price_display"]}</div>'
+                    f'<div class="toss-profit-rate {profit_class}">{sign_str}{data["profit_rate"]:.2f}%</div>'
+                    "</div>",
+                    unsafe_allow_html=True,
+                )
+
+            st.markdown("<div style='margin-top: 20px;'></div>", unsafe_allow_html=True)
+
+            # 하단 4개 정보 박스 그리드 (Streamlit 네이티브 컬럼 사용)
+            g1, g2, g3, g4 = st.columns(4)
+
+            with g1:
+                st.markdown(
+                    f"""
+                <div class="toss-info-box">
+                    <div class="toss-info-label">보유수량</div>
+                    <div class="toss-info-value">{data['shares_display']}</div>
+                </div>
+                """,
+                    unsafe_allow_html=True,
+                )
+
+            with g2:
+                st.markdown(
+                    f"""
+                <div class="toss-info-box">
+                    <div class="toss-info-label">평균단가</div>
+                    <div class="toss-info-value">{data['avg_price_display']}</div>
+                </div>
+                """,
+                    unsafe_allow_html=True,
+                )
+
+            with g3:
+                st.markdown(
+                    f"""
+                <div class="toss-info-box">
+                    <div class="toss-info-label">투자원금</div>
+                    <div class="toss-info-value">{data['invest_krw']:,.0f}원</div>
+                </div>
+                """,
+                    unsafe_allow_html=True,
+                )
+
+            with g4:
+                st.markdown(
+                    f"""
+                <div class="toss-info-box">
+                    <div class="toss-info-label">평가금액</div>
+                    <div class="toss-info-value">{data['current_val_krw']:,.0f}원</div>
+                </div>
+                """,
+                    unsafe_allow_html=True,
+                )
+
+            st.markdown("</div>", unsafe_allow_html=True)  # 카드 컨테이너 종료
+
+            # 차트 기간 선택 및 그래프 렌더링
             period_option = st.radio(
                 "차트 기간 선택",
                 ["1일", "1주", "1달", "3달"],
